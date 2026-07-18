@@ -1,0 +1,6 @@
+subsample=0.9
+num_leaves=63
+n_estimators=200
+min_child_samples=20
+learning_rate=0.05
+colsample_bytree=0.8

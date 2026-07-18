@@ -1,0 +1,5 @@
+total_machines_analyzed=1723
+underutilized_machines=1220
+total_estimated_savings_usd=2037986.73
+assumed_cost_per_gpu_hour=2.5
+underutilized_threshold_pct=15.0
