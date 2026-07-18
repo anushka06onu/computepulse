@@ -1,0 +1,18 @@
+# Data files (large)
+data/
+
+# Model pickle files
+models/*.pkl
+
+# Results and artifacts
+results/*.txt
+results/*.csv
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Local dev configs
+.DS_Store
+.env
+.env.*
