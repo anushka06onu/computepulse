@@ -10,7 +10,6 @@ import {
   SkipForward,
   Sparkles,
 } from 'lucide-react'
-import { api, type DemoScenario } from '../api/client'
 import { useApp } from '../context/AppContext'
 import { HealthGauge } from '../components/HealthGauge'
 import { CountUp } from '../components/KPI'
@@ -23,37 +22,73 @@ const STEP_MS = 2200
 const TOTAL = 5
 
 export function RunDemoPage() {
-  const { seed, critical, watch, health } = useApp()
-  const [data, setData] = useState<DemoScenario | null>(null)
+  const {
+    health,
+    demoScenario,
+    demoReplayAt,
+    demoRank,
+    ensureDemoScenario,
+    seed,
+    requestDemoReplay,
+    requestDemoRun,
+  } = useApp()
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(!demoScenario)
   const [step, setStep] = useState(0)
   const [playing, setPlaying] = useState(true)
-  const [gaugeScore, setGaugeScore] = useState<number | null>(null)
+  const [gaugeScore, setGaugeScore] = useState<number | null>(
+    demoScenario?.health_before ?? null,
+  )
 
-  const load = useCallback(() => {
-    setData(null)
+  const data =
+    demoScenario &&
+    demoScenario.seed === seed &&
+    (demoScenario.rank ?? 0) === demoRank
+      ? demoScenario
+      : null
+
+  const startPlayback = useCallback((before: number, after: number) => {
     setError(null)
+    setGaugeScore(before)
     setStep(0)
     setPlaying(true)
-    setGaugeScore(null)
-    api
-      .demo(seed, critical, watch)
-      .then((d) => {
-        setData(d)
-        setGaugeScore(d.health_before)
-        if (reduced) {
-          setStep(TOTAL - 1)
-          setPlaying(false)
-          setGaugeScore(d.health_after)
-        }
-      })
-      .catch((e: Error) => setError(e.message))
-  }, [seed, critical, watch])
+    if (reduced) {
+      setStep(TOTAL - 1)
+      setPlaying(false)
+      setGaugeScore(after)
+    }
+  }, [])
 
+  // Load scenario for current seed + rank.
   useEffect(() => {
     if (health && !health.ready) return
-    load()
-  }, [load, health])
+    let cancelled = false
+
+    setLoading(true)
+    ensureDemoScenario(seed, demoRank)
+      .then((d) => {
+        if (cancelled) return
+        setLoading(false)
+        startPlayback(d.health_before, d.health_after)
+      })
+      .catch((e: Error) => {
+        if (cancelled) return
+        setLoading(false)
+        setError(e.message)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [health, seed, demoRank, ensureDemoScenario, startPlayback])
+
+  useEffect(() => {
+    if (demoScenario && demoScenario.seed === seed) setLoading(false)
+  }, [demoScenario, seed])
+
+  useEffect(() => {
+    if (!demoReplayAt || !data) return
+    startPlayback(data.health_before, data.health_after)
+  }, [demoReplayAt, data, startPlayback])
 
   useEffect(() => {
     if (!data || !playing || reduced) return
@@ -75,11 +110,8 @@ export function RunDemoPage() {
   }, [step, data])
 
   const replay = useCallback(() => {
-    if (!data) return
-    setGaugeScore(data.health_before)
-    setStep(0)
-    setPlaying(true)
-  }, [data])
+    requestDemoReplay()
+  }, [requestDemoReplay])
 
   const skip = useCallback(() => {
     if (!data) return
@@ -91,30 +123,42 @@ export function RunDemoPage() {
   const progress = useMemo(() => ((step + 1) / TOTAL) * 100, [step])
 
   if (error) return <p className="banner">{error}</p>
-  if (!data) return <div className="skeleton" style={{ height: 480 }} />
+  if (loading || !data) return <div className="skeleton" style={{ height: 480 }} />
 
   const show = (i: number) => step >= i
   const delta = data.health_after - data.health_before
+  const rankLabel = (data.rank ?? demoRank) + 1
+  const poolLabel = data.pool_size ?? '?'
 
   return (
     <div className="demo-page">
       <div className="page-header">
         <div>
           <div className="page-eyebrow">
-            <Play size={12} /> Guided demo
+            <Play size={12} /> Guided demo · critical #{rankLabel}/{poolLabel} ·
+            seed {data.seed}
           </div>
           <h1>Run Demo</h1>
           <p>
-            A live, data-driven walkthrough: catch a failing machine, explain why,
-            and reroute its workload — all from the current snapshot.
+            Walks a real high-risk machine from the current fleet snapshot.
+            Top-bar <strong>Run Demo</strong> advances to the next critical node;
+            <strong> Replay</strong> keeps this one.
           </p>
         </div>
         <div className="page-actions">
           <button className="btn btn-ghost" onClick={skip}>
             <SkipForward size={16} /> Skip
           </button>
-          <button className="btn btn-primary" onClick={replay}>
+          <button className="btn btn-ghost" onClick={replay}>
             <RotateCcw size={16} /> Replay
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              void requestDemoRun()
+            }}
+          >
+            <Play size={16} /> Next critical
           </button>
         </div>
       </div>
@@ -132,7 +176,7 @@ export function RunDemoPage() {
         <AnimatePresence>
           {show(0) ? (
             <motion.div
-              key="risk"
+              key={`risk-${data.from.node_id}`}
               className="demo-card demo-risk"
               initial={{ opacity: 0, y: 20, filter: 'blur(6px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
@@ -143,9 +187,13 @@ export function RunDemoPage() {
               </div>
               <div className="demo-node-id">Node {data.from.node_id}</div>
               <div className="demo-risk-value">
-                <CountUp end={data.from.risk_score} decimals={1} suffix="%" />
+                <CountUp
+                  end={data.from.fused_risk ?? data.from.risk_score}
+                  decimals={1}
+                  suffix="%"
+                />
               </div>
-              <div className="demo-risk-label">predicted failure risk</div>
+              <div className="demo-risk-label">fused failure risk</div>
             </motion.div>
           ) : null}
         </AnimatePresence>
@@ -153,7 +201,7 @@ export function RunDemoPage() {
         <AnimatePresence>
           {show(1) ? (
             <motion.div
-              key="reasons"
+              key={`reasons-${data.from.node_id}`}
               className="demo-card demo-reasons"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -184,7 +232,7 @@ export function RunDemoPage() {
         <AnimatePresence>
           {show(2) ? (
             <motion.div
-              key="rec"
+              key={`rec-${data.from.node_id}-${data.to.node_id}`}
               className="demo-card demo-move"
               initial={{ opacity: 0, x: reduced ? 0 : 30 }}
               animate={{ opacity: 1, x: 0 }}
@@ -197,13 +245,20 @@ export function RunDemoPage() {
                 <div className="demo-move-node from">
                   <span>{data.job.label}</span>
                   <strong>Node {data.from.node_id}</strong>
-                  <em className="critical">{data.from.risk_score.toFixed(1)}%</em>
+                  <em className="critical">
+                    {(data.from.fused_risk ?? data.from.risk_score).toFixed(1)}% fused
+                  </em>
                 </div>
                 <ArrowRight size={24} className="demo-move-arrow" />
                 <div className="demo-move-node to">
                   <span>Safer target</span>
                   <strong>Node {data.to.node_id}</strong>
-                  <em className="healthy">{data.to.risk_score.toFixed(1)}%</em>
+                  <em className="healthy">
+                    score{' '}
+                    {(
+                      data.to.placement_score ?? 100 - data.to.risk_score
+                    ).toFixed(1)}
+                  </em>
                 </div>
               </div>
             </motion.div>
@@ -213,7 +268,7 @@ export function RunDemoPage() {
         <AnimatePresence>
           {show(3) ? (
             <motion.div
-              key="gauge"
+              key={`gauge-${data.from.node_id}`}
               className="demo-card demo-gauge"
               initial={{ opacity: 0, scale: reduced ? 1 : 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -222,7 +277,7 @@ export function RunDemoPage() {
               <HealthGauge
                 score={gaugeScore ?? data.health_before}
                 size={160}
-                label="Projected cluster health"
+                label="Projected workload health"
               />
               <div className="demo-gauge-delta">
                 <span className="demo-gauge-before">
@@ -247,7 +302,7 @@ export function RunDemoPage() {
         <AnimatePresence>
           {show(4) ? (
             <motion.div
-              key="done"
+              key={`done-${data.from.node_id}`}
               className="demo-card demo-done"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -267,7 +322,8 @@ export function RunDemoPage() {
               </motion.div>
               <h3>Workload rerouted</h3>
               <p>
-                {data.job.label} moved off a {data.from.risk_score.toFixed(0)}%-risk
+                {data.job.label} moved off a{' '}
+                {(data.from.fused_risk ?? data.from.risk_score).toFixed(0)}%-fused
                 machine onto Node {data.to.node_id}.
               </p>
               <div className="cta-row">
