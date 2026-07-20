@@ -19,17 +19,17 @@ import { ChartTooltip } from '../components/ChartTooltip'
 import { staggerContainer } from '../motion/presets'
 
 export function OptimizePage() {
-  const { health } = useApp()
+  const { health, seed, watch } = useApp()
   const [data, setData] = useState<OptimizeResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (health && !health.ready) return
     api
-      .optimize()
+      .optimize(seed, watch)
       .then(setData)
       .catch((e: Error) => setError(e.message))
-  }, [health])
+  }, [health, seed, watch])
 
   if (error) return <p className="banner">{error}</p>
   if (!data) return <div className="skeleton" style={{ height: 240 }} />
@@ -48,10 +48,11 @@ export function OptimizePage() {
           </div>
           <h1>Cost Optimization</h1>
           <p>
-            Underutilized = avg GPU usage below{' '}
-            {data.summary.underutilized_threshold_pct.toFixed(0)}%. Dollar estimate
-            assumes ${data.summary.assumed_cost_per_gpu_hour.toFixed(2)}/GPU-hour
-            (industry assumption, not from the dataset).
+            Policy {data.policy ?? 'safe_reclaim_v1'}: reclaim only when fused risk
+            &lt; watch ({data.summary.watch_threshold ?? 40}). Underutilized = avg
+            GPU below {data.summary.underutilized_threshold_pct.toFixed(0)}%. Dollar
+            estimate assumes ${data.summary.assumed_cost_per_gpu_hour.toFixed(2)}
+            /GPU-hour (assumption, not Alibaba ground truth).
           </p>
         </div>
         <div className="page-actions">
@@ -151,9 +152,10 @@ export function OptimizePage() {
             <thead>
               <tr>
                 <th>Node</th>
+                <th>Action</th>
+                <th>Fused %</th>
                 <th>Avg GPU %</th>
                 <th>Avg CPU %</th>
-                <th>Hours observed</th>
                 <th>Idle hours (est.)</th>
                 <th>Savings ($)</th>
                 </tr>
@@ -164,9 +166,16 @@ export function OptimizePage() {
                     <td>
                       <Link to={`/app/nodes/${o.node_id}`}>{o.node_id}</Link>
                     </td>
+                    <td>
+                      <span
+                        className={`chip${o.action === 'reclaim' ? ' active' : ''}`}
+                      >
+                        {o.action ?? '—'}
+                      </span>
+                    </td>
+                    <td>{o.fused_risk ?? '—'}</td>
                     <td>{o.avg_gpu_usage_pct}</td>
                     <td>{o.avg_cpu_usage_pct}</td>
-                    <td>{o.total_hours_observed}</td>
                     <td>{o.estimated_idle_hours}</td>
                     <td>{o.estimated_savings_usd.toLocaleString()}</td>
                   </tr>
@@ -180,3 +189,4 @@ export function OptimizePage() {
     </div>
   )
 }
+

@@ -31,9 +31,9 @@ export function FleetPage() {
   const { seed, critical, watch, health } = useApp()
   const [data, setData] = useState<FleetSnapshot | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [filter, setFilter] = useState<'all' | 'critical' | 'watch' | 'healthy'>(
-    'all',
-  )
+  const [filter, setFilter] = useState<
+    'all' | 'critical' | 'watch' | 'healthy' | 'worst5'
+  >('all')
 
   useEffect(() => {
     if (health && !health.ready) return
@@ -55,6 +55,9 @@ export function FleetPage() {
   const filtered = useMemo(() => {
     if (!data) return []
     if (filter === 'all') return data.nodes
+    if (filter === 'worst5') {
+      return data.nodes.filter((n) => n.risk_percentile >= 95)
+    }
     return data.nodes.filter((n) => n.health === filter)
   }, [data, filter])
 
@@ -65,7 +68,7 @@ export function FleetPage() {
       count: 0,
     }))
     for (const n of data.nodes) {
-      const idx = Math.min(19, Math.floor(n.risk_score / 5))
+      const idx = Math.min(19, Math.floor(n.fused_risk / 5))
       bins[idx].count += 1
     }
     return bins
@@ -111,6 +114,16 @@ export function FleetPage() {
         </div>
       </div>
 
+      {data.summary.critical > 0 ? (
+        <Link to="/app/warnings" className="agent-strip">
+          <AlertTriangle size={16} />
+          <span>
+            {data.summary.critical} critical node
+            {data.summary.critical === 1 ? '' : 's'} — open Warnings inbox
+          </span>
+        </Link>
+      ) : null}
+
       <div className="fleet-hero">
         <Reveal>
           <div className="panel gauge-panel">
@@ -122,10 +135,17 @@ export function FleetPage() {
               <div className="gauge-copy">
                 <h2>Fleet health score</h2>
                 <p className="panel-sub">
-                  100 minus the mean predicted failure risk across all{' '}
-                  {data.summary.total_machines.toLocaleString()} machines in this
-                  snapshot.
+                  100 − mean fused risk (0.75·risk + 0.25·anomaly) across{' '}
+                  {data.summary.total_machines.toLocaleString()} machines.
+                  {data.summary.model_version
+                    ? ` · ${data.summary.model_version}`
+                    : ''}
                 </p>
+                {data.drift?.high && data.drift.message ? (
+                  <p className="banner" style={{ marginTop: 12 }}>
+                    {data.drift.message} (PSI≈{data.drift.psi})
+                  </p>
+                ) : null}
                 <div className="gauge-legend">
                   <span>
                     <i className="dot healthy" /> Healthy 70+
@@ -178,6 +198,7 @@ export function FleetPage() {
         {(
           [
             ['all', 'All machines'],
+            ['worst5', 'Worst 5%'],
             ['critical', 'Critical'],
             ['watch', 'Watch'],
             ['healthy', 'Healthy'],
@@ -198,7 +219,7 @@ export function FleetPage() {
           <div className="panel-inner-core">
             <div className="panel-header">
               <div>
-                <h2>Machines by risk</h2>
+                <h2>Machines by fused risk</h2>
                 <p className="panel-sub">
                   {filtered.length.toLocaleString()} shown · click a node to
                   inspect
@@ -217,7 +238,10 @@ export function FleetPage() {
                       <Link to={`/app/nodes/${r.node_id}`}>{r.node_id}</Link>
                     ),
                   },
+                  { key: 'fused_risk', label: 'Fused %' },
                   { key: 'risk_score', label: 'Risk %' },
+                  { key: 'anomaly_score', label: 'Anomaly' },
+                  { key: 'fleet_rank', label: 'Rank' },
                   {
                     key: 'health',
                     label: 'Health',
@@ -225,8 +249,6 @@ export function FleetPage() {
                   },
                   { key: 'cpu_usage_pct', label: 'CPU %' },
                   { key: 'gpu_usage_pct', label: 'GPU %' },
-                  { key: 'mem_pressure', label: 'Mem pressure' },
-                  { key: 'duration_hours', label: 'Duration (hrs)' },
                   { key: 'status', label: 'Last status' },
                 ]}
               />
@@ -244,7 +266,7 @@ export function FleetPage() {
           <div className="panel-inner-core">
             <div className="panel-header">
               <div>
-                <h2>Risk score distribution</h2>
+                <h2>Fused risk distribution</h2>
                 <p className="panel-sub">Histogram across the current snapshot</p>
               </div>
             </div>
@@ -274,3 +296,4 @@ export function FleetPage() {
     </div>
   )
 }
+
