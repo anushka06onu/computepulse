@@ -128,11 +128,41 @@ python model3_optimization.py
 `train_model.py` takes a few minutes - it runs real cross-validation and
 real hyperparameter search, not a single `.fit()` call.
 
-### 4. Open the dashboard
+### 4. Open the web UI (recommended)
+
+Terminal 1 — API (from repo root):
+```
+uvicorn api.main:app --reload --port 8000
+```
+
+Terminal 2 — React app:
+```
+cd Frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:5173 — landing page + full dashboard under `/app/*`.
+
+### 5. Streamlit fallback (optional)
 ```
 streamlit run dashboard.py
 ```
 
+---
+
+## Web app layout
+
+| Path | What it does |
+|---|---|
+| `Frontend/` | All React UI (Vite + TypeScript + Framer Motion) |
+| `api/` | FastAPI JSON layer over the same ML artifacts |
+| `/` | Marketing landing page |
+| `/app/fleet` … `/app/evidence` | Interactive dashboard (parity with Streamlit tabs) |
+| `/app/compare` | Side-by-side node comparison |
+
+Features: command palette (⌘K), CSV export, adjustable risk thresholds,
+node deep-links, onboarding tour, artifact readiness banner.
 ---
 
 ## Honesty notes (know these before presenting to judges)
@@ -162,3 +192,4 @@ streamlit run dashboard.py
 ---
 
 **ComputePulse - Predict. Prevent. Optimize.**
+
