@@ -93,7 +93,60 @@ export function EvidencePage() {
             </>
           }
         />
+        <KPI
+          label="PR-AUC"
+          value={<CountUp end={data.eval?.pr_auc ?? 0} decimals={3} />}
+          tone="healthy"
+        />
+        <KPI
+          label="Top-5% recall"
+          value={
+            <>
+              <CountUp end={(data.eval?.top5_recall ?? 0) * 100} decimals={1} />%
+            </>
+          }
+        />
+        <KPI
+          label="ECE"
+          value={<CountUp end={data.eval?.ece ?? 0} decimals={3} />}
+        />
+        <KPI
+          label="Model version"
+          value={
+            <span style={{ fontSize: 14 }}>{data.model_version ?? '—'}</span>
+          }
+        />
       </motion.div>
+
+      {data.fusion || data.placement_lift ? (
+        <Reveal delay={0.05}>
+          <div className="panel">
+            <div className="panel-inner-core">
+              <div className="panel-header">
+                <div>
+                  <h2>Ops fusion & placement lift</h2>
+                  <p className="panel-sub">
+                    Dataset rows on disk: {data.eval?.n_rows?.toLocaleString() ?? '—'}
+                  </p>
+                </div>
+              </div>
+              {data.fusion ? (
+                <p>
+                  Fused risk = {data.fusion.w_risk}·risk + {data.fusion.w_anomaly}
+                  ·anomaly×100
+                </p>
+              ) : null}
+              {data.placement_lift ? (
+                <p className="caption" style={{ marginBottom: 0 }}>
+                  Offline placement lift (vs risk-only):{' '}
+                  {(data.placement_lift.relative_reduction_vs_risk_only * 100).toFixed(1)}
+                  % relative fail-rate reduction · policy risk_anomaly_v2
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </Reveal>
+      ) : null}
 
       <Reveal delay={0.1}>
         <div className="panel">
@@ -264,3 +317,4 @@ export function EvidencePage() {
     </div>
   )
 }
+
