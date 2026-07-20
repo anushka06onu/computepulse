@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   Activity,
+  Bell,
   BarChart3,
   GitCompare,
   Grid3x3,
@@ -12,7 +13,7 @@ import {
   Sparkles,
   Wallet,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useApp } from '../context/AppContext'
 import { ReadinessBanner } from './ReadinessBanner'
@@ -20,9 +21,11 @@ import { CommandPalette } from './CommandPalette'
 import { OnboardingTour } from './OnboardingTour'
 import { pageVariants } from '../motion/presets'
 import { ThemeToggle } from './ThemeToggle'
+import { api } from '../api/client'
 
 const links = [
   { to: '/app/fleet', label: 'Fleet Overview', id: 'nav-fleet', icon: LayoutDashboard },
+  { to: '/app/warnings', label: 'Warnings', id: 'nav-warnings', icon: Bell },
   { to: '/app/map', label: 'Cluster Map', id: 'nav-map', icon: Grid3x3 },
   { to: '/app/nodes', label: 'Node Explorer', id: 'nav-nodes', icon: Search },
   { to: '/app/placement', label: 'Job Placement', id: 'nav-placement', icon: Sparkles },
@@ -32,12 +35,36 @@ const links = [
 ]
 
 export function AppShell() {
-  const { refresh, critical, watch, setCritical, setWatch, tourDone, seed } =
-    useApp()
+  const {
+    refresh,
+    critical,
+    watch,
+    setCritical,
+    setWatch,
+    tourDone,
+    seed,
+    requestDemoRun,
+  } = useApp()
   const [busy, setBusy] = useState(false)
   const [showThresh, setShowThresh] = useState(false)
+  const [warnCount, setWarnCount] = useState(0)
   const navigate = useNavigate()
   const location = useLocation()
+
+  useEffect(() => {
+    let cancelled = false
+    api
+      .warningsCounts(seed, critical, watch)
+      .then((d) => {
+        if (!cancelled) setWarnCount(d.counts.total)
+      })
+      .catch(() => {
+        if (!cancelled) setWarnCount(0)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [seed, critical, watch])
 
   return (
     <div className="app-shell">
@@ -85,6 +112,9 @@ export function AppShell() {
                   )}
                   <Icon size={17} strokeWidth={2} />
                   {l.label}
+                  {l.to === '/app/warnings' && warnCount > 0 ? (
+                    <span className="nav-badge">{warnCount > 99 ? '99+' : warnCount}</span>
+                  ) : null}
                 </NavLink>
               )
             })}
@@ -159,7 +189,15 @@ export function AppShell() {
             <button
               className="btn btn-primary btn-sm"
               id="run-demo-btn"
-              onClick={() => navigate('/app/demo')}
+              onClick={() => {
+                if (location.pathname === '/app/demo') {
+                  // Already on demo → next critical node
+                  void requestDemoRun()
+                } else {
+                  // Enter demo with current rank (no skip)
+                  navigate('/app/demo')
+                }
+              }}
             >
               <Play size={14} />
               Run Demo
@@ -192,3 +230,4 @@ export function AppShell() {
     </div>
   )
 }
+

@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext'
 
 const routes = [
   { label: 'Fleet Overview', path: '/app/fleet' },
+  { label: 'Warnings Inbox', path: '/app/warnings' },
   { label: 'Node Explorer', path: '/app/nodes' },
   { label: 'Job Placement', path: '/app/placement' },
   { label: 'Cost Optimization', path: '/app/optimize' },
@@ -108,3 +109,4 @@ export function CommandPalette() {
     </div>
   )
 }
+
