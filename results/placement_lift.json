@@ -1,0 +1,10 @@
+{
+  "policy": "risk_anomaly_v2",
+  "k": 86,
+  "n_nodes": 1728,
+  "fail_rate_random": 0.2183,
+  "fail_rate_risk_only": 0.1581,
+  "fail_rate_risk_anomaly_v2": 0.1292,
+  "relative_reduction_vs_risk_only": 0.1827,
+  "relative_reduction_vs_random": 0.4082
+}
