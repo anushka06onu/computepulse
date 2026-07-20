@@ -11,8 +11,14 @@ results/*.csv
 # Python caches
 __pycache__/
 *.pyc
+.venv/
+
+# Frontend
+Frontend/node_modules/
+Frontend/dist/
 
 # Local dev configs
 .DS_Store
 .env
 .env.*
+
