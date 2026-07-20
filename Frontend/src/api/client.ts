@@ -14,6 +14,10 @@ export interface HealthResponse {
 export interface FleetNode {
   node_id: number
   risk_score: number
+  anomaly_score: number
+  fused_risk: number
+  risk_percentile: number
+  fleet_rank: number
   cpu_usage_pct: number
   gpu_usage_pct: number
   mem_pressure: number
@@ -33,6 +37,16 @@ export interface FleetSnapshot {
     healthy: number
     health_score: number
     grade: Grade
+    fusion?: { w_risk: number; w_anomaly: number }
+    model_version?: string
+    feature_set?: string[]
+    trained_at?: string | null
+  }
+  drift?: {
+    psi: number
+    high: boolean
+    threshold: number
+    message: string | null
   }
   nodes: FleetNode[]
   caption: string
@@ -40,9 +54,11 @@ export interface FleetSnapshot {
 
 export interface TimelinePoint {
   index: number
-  risk_score: number
-  cpu_usage_pct: number
-  gpu_usage_pct: number
+  risk_score: number | null
+  fused_risk?: number | null
+  forecast_risk?: number | null
+  cpu_usage_pct: number | null
+  gpu_usage_pct: number | null
   status: string
 }
 
@@ -54,9 +70,16 @@ export interface ShapItem {
 export interface NodeDetail {
   node_id: number
   risk_score: number
+  anomaly_score: number
+  fused_risk: number
+  risk_percentile: number
+  fleet_rank: number
   health: Health
   instance_count: number
   historical_failure_rate: number
+  model_version?: string
+  trained_at?: string | null
+  fusion?: { w_risk: number; w_anomaly: number }
   snapshot: {
     cpu_usage_pct: number
     gpu_usage_pct: number
@@ -79,56 +102,78 @@ export interface NodeDetail {
 
 export interface DemoScenario {
   seed: number
+  rank?: number
+  pool_size?: number
+  stable?: boolean
   job: { id: number; label: string }
   from: {
     node_id: number
     risk_score: number
+    anomaly_score?: number
+    fused_risk?: number
+    placement_score?: number
     health: number
     reasons: string[]
   }
   to: {
     node_id: number
     risk_score: number
+    anomaly_score?: number
+    fused_risk?: number
+    placement_score?: number
     health: number
     actual_failure_rate: number | null
   }
   health_before: number
   health_after: number
+  placement_delta?: number
+  fusion?: { w_risk: number; w_anomaly: number }
+  model_version?: string
   caveat: string
   steps: string[]
 }
 
+export interface PlacementRow {
+  node_id: number
+  risk_score: number
+  anomaly_score?: number
+  fused_risk?: number
+  score?: number
+  components?: {
+    safety: number
+    normality: number
+    history: number
+  }
+  cpu_usage_pct: number
+  gpu_usage_pct: number
+  actual_failure_rate: number | null
+}
+
 export interface PlacementResponse {
+  policy?: string
   correlation: number
   n: number
-  recommended: Array<{
-    node_id: number
-    risk_score: number
-    cpu_usage_pct: number
-    gpu_usage_pct: number
-    actual_failure_rate: number | null
-  }>
-  avoid: Array<{
-    node_id: number
-    risk_score: number
-    cpu_usage_pct: number
-    gpu_usage_pct: number
-    actual_failure_rate: number | null
-  }>
-  top_pick: {
-    node_id: number
-    risk_score: number
-    actual_failure_rate: number | null
+  recommended: PlacementRow[]
+  avoid: PlacementRow[]
+  top_pick: PlacementRow | null
+  lift?: {
+    fail_rate_risk_only: number
+    fail_rate_risk_anomaly_v2: number
+    relative_reduction_vs_risk_only: number
   } | null
 }
 
 export interface OptimizeResponse {
+  policy?: string
   summary: {
     total_machines_analyzed: number
     underutilized_machines: number
     total_estimated_savings_usd: number
     underutilized_threshold_pct: number
     assumed_cost_per_gpu_hour: number
+    reclaim_count?: number
+    investigate_count?: number
+    watch_threshold?: number
   }
   opportunities: Array<{
     node_id: number
@@ -137,13 +182,35 @@ export interface OptimizeResponse {
     total_hours_observed: number
     estimated_idle_hours: number
     estimated_savings_usd: number
+    fused_risk?: number | null
+    action?: 'reclaim' | 'investigate'
   }>
+  caveat?: string
 }
 
 export interface MetricsResponse {
   baseline: Record<string, number>
   model: Record<string, number>
   cv: { auc_mean: number; auc_std: number }
+  eval?: {
+    pr_auc: number
+    roc_auc: number
+    ece: number
+    brier: number
+    top5_recall: number
+    top10_recall: number
+    node_top5_recall: number
+    n_rows: number
+    n_test: number
+  }
+  fusion?: { w_risk: number; w_anomaly: number }
+  model_version?: string
+  trained_at?: string | null
+  placement_lift?: {
+    fail_rate_risk_only: number
+    fail_rate_risk_anomaly_v2: number
+    relative_reduction_vs_risk_only: number
+  } | null
   confusion: {
     true_negative: number
     false_positive: number
@@ -153,6 +220,81 @@ export interface MetricsResponse {
   }
   feature_importance: Array<{ feature: string; importance: number }>
   comparison: Array<{ metric: string; baseline: number; model: number }>
+}
+
+export interface ExplainResponse {
+  summary: string
+  shap_reasons: string[]
+  neighbors: Array<{
+    node_id: number
+    risk_score: number
+    historical_failure_rate: number
+  }>
+  caveat: string
+  llm_used: boolean
+  embedding_used: boolean
+  providers: { llm: string | null; embeddings: string | null }
+}
+
+export type WarningType =
+  | 'node_critical'
+  | 'node_watch'
+  | 'forecast_rising'
+  | 'drift_high'
+  | 'unsafe_reclaim'
+  | 'model_trust'
+
+export type WarningSeverity = 'high' | 'medium' | 'low'
+
+export interface WarningAlert {
+  id: string
+  type: WarningType
+  severity: WarningSeverity
+  node_id: number | null
+  scores: Record<string, number | null | undefined>
+  title: string
+  summary: string
+  reasons: string[]
+  neighbors: Array<{
+    node_id: number
+    risk_score: number
+    historical_failure_rate: number
+  }>
+  recommendation: {
+    kind: string
+    target_node_id: number | null
+    placement_score: number | null
+    caveat: string
+  } | null
+  providers: { llm: string | null; embeddings: string | null }
+  model_version: string
+  llm_used: boolean
+  embedding_used: boolean
+  caveat: string
+}
+
+export interface WarningsResponse {
+  seed: number
+  critical: number
+  watch: number
+  counts: {
+    total: number
+    high: number
+    medium: number
+    low: number
+    by_type: Record<string, number>
+  }
+  drift?: {
+    psi: number
+    high: boolean
+    threshold: number
+    message: string | null
+  }
+  model_version: string
+  fusion?: { w_risk: number; w_anomaly: number }
+  explain_budget: number
+  alerts: WarningAlert[]
+  caveat: string
 }
 
 const BASE = ''
@@ -190,10 +332,19 @@ export const api = {
     get<{ node_ids: number[]; count: number }>(
       seed != null ? `/api/nodes/?seed=${seed}` : '/api/nodes/',
     ),
-  node: (id: number, seed?: number, critical = 70, watch = 40) =>
-    get<NodeDetail>(
-      `/api/nodes/${id}?critical=${critical}&watch=${watch}${seed != null ? `&seed=${seed}` : ''}`,
-    ),
+  node: (
+    id: number,
+    seed?: number,
+    critical = 70,
+    watch = 40,
+    opts?: { light?: boolean; forecast?: boolean },
+  ) => {
+    const light = opts?.light ? '&light=true' : ''
+    const forecast = opts?.forecast === false ? '&forecast=false' : ''
+    return get<NodeDetail>(
+      `/api/nodes/${id}?critical=${critical}&watch=${watch}${seed != null ? `&seed=${seed}` : ''}${light}${forecast}`,
+    )
+  },
   compare: (nodeIds: number[], seed?: number, critical = 70, watch = 40) =>
     post<{ nodes: NodeDetail[] }>(
       `/api/nodes/compare?critical=${critical}&watch=${watch}${seed != null ? `&seed=${seed}` : ''}`,
@@ -203,11 +354,43 @@ export const api = {
     get<PlacementResponse>(
       `/api/placement/?n=${n}${seed != null ? `&seed=${seed}` : ''}`,
     ),
-  optimize: () => get<OptimizeResponse>('/api/optimize'),
+  optimize: (seed?: number, watch = 40) =>
+    get<OptimizeResponse>(
+      `/api/optimize?watch=${watch}${seed != null ? `&seed=${seed}` : ''}`,
+    ),
   metrics: () => get<MetricsResponse>('/api/metrics'),
-  demo: (seed?: number, critical = 70, watch = 40) =>
+  demo: (seed?: number, critical = 70, watch = 40, rank = 0) =>
     get<DemoScenario>(
-      `/api/demo/scenario?critical=${critical}&watch=${watch}${seed != null ? `&seed=${seed}` : ''}`,
+      `/api/demo/scenario?critical=${critical}&watch=${watch}&rank=${rank}${
+        seed != null ? `&seed=${seed}` : ''
+      }`,
+    ),
+  explain: (nodeId: number, seed?: number, critical = 70, watch = 40) =>
+    post<ExplainResponse>('/api/explain', {
+      node_id: nodeId,
+      seed: seed ?? null,
+      critical,
+      watch,
+    }),
+  warnings: (seed?: number, critical = 70, watch = 40, explainBudget = 0) =>
+    get<WarningsResponse>(
+      `/api/warnings?critical=${critical}&watch=${watch}&explain_budget=${explainBudget}${seed != null ? `&seed=${seed}` : ''}`,
+    ),
+  warningsCounts: (seed?: number, critical = 70, watch = 40) =>
+    get<{
+      seed: number
+      counts: WarningsResponse['counts']
+      model_version: string
+    }>(
+      `/api/warnings/counts?critical=${critical}&watch=${watch}${seed != null ? `&seed=${seed}` : ''}`,
+    ),
+  warningsRun: (seed?: number, critical = 70, watch = 40, explainBudget = 0) =>
+    post<WarningsResponse>(
+      `/api/warnings/run?critical=${critical}&watch=${watch}&explain_budget=${explainBudget}${seed != null ? `&seed=${seed}` : ''}`,
+    ),
+  warning: (alertId: string, seed?: number, critical = 70, watch = 40) =>
+    get<WarningAlert & { seed?: number; fleet_caveat?: string }>(
+      `/api/warnings/${encodeURIComponent(alertId)}?critical=${critical}&watch=${watch}${seed != null ? `&seed=${seed}` : ''}`,
     ),
 }
 
