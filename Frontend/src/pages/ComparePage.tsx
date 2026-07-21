@@ -108,13 +108,12 @@ export function ComparePage() {
       {results ? (
         <Reveal delay={0.1}>
           <motion.div
+            className="compare-grid"
             variants={staggerContainer}
             initial="initial"
             animate="animate"
             style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${results.length}, 1fr)`,
-              gap: 16,
+              ['--compare-cols' as string]: String(results.length),
             }}
           >
             {results.map((n) => (
@@ -188,5 +187,6 @@ export function ComparePage() {
     </div>
   )
 }
+
 
 

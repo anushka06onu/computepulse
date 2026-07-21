@@ -12,6 +12,7 @@ import {
 import { CountUp } from '../components/KPI'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { staggerContainer, staggerItem } from '../motion/presets'
+import { MountWhenVisible, useDeferredReady } from '../hooks/useDeferred'
 
 const HeroClusterScene = lazy(() =>
   import('../components/landing/HeroClusterScene').then((m) => ({
@@ -64,6 +65,7 @@ const MODULES = [
 ]
 
 export function LandingPage() {
+  const defer3d = useDeferredReady(160)
   const can3d = useMemo(() => {
     if (typeof window === 'undefined') return false
     try {
@@ -79,7 +81,7 @@ export function LandingPage() {
       <div className="landing-visual" aria-hidden>
         <div className="landing-visual-glow landing-visual-glow-a" />
         <div className="landing-visual-glow landing-visual-glow-b" />
-        {can3d ? (
+        {can3d && defer3d ? (
           <Suspense fallback={null}>
             <HeroClusterScene reduced={reduced} />
           </Suspense>
@@ -92,39 +94,33 @@ export function LandingPage() {
             <div className="brand-mark">
               <Activity size={15} strokeWidth={2.5} />
             </div>
-            Compute<span>Pulse</span>
+            <span className="brand-word">
+              Compute<span>Pulse</span>
+            </span>
           </div>
           <div className="landing-nav-actions">
             <ThemeToggle />
-            <Link to="/app/fleet" className="btn btn-outline-light btn-sm">
-              Open dashboard
+            <Link to="/app/fleet" className="landing-nav-link">
+              Dashboard
             </Link>
           </div>
         </header>
 
         <div className="hero-content">
-          <motion.p
-            className="hero-kicker"
-            initial={{ opacity: 0, y: reduced ? 0 : 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={reduced ? { duration: 0 } : { duration: 0.4, ease }}
-          >
-            Cluster health intelligence
-          </motion.p>
           <motion.h1
             className="brand-hero"
-            initial={{ opacity: 0, y: reduced ? 0 : 22 }}
+            initial={{ opacity: 0, y: reduced ? 0 : 28 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={reduced ? { duration: 0 } : { duration: 0.65, ease }}
+            transition={reduced ? { duration: 0 } : { duration: 0.7, ease }}
           >
-            ComputePulse
+            Compute<span>Pulse</span>
           </motion.h1>
           <motion.p
             className="tagline"
-            initial={{ opacity: 0, y: reduced ? 0 : 14 }}
+            initial={{ opacity: 0, y: reduced ? 0 : 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={
-              reduced ? { duration: 0 } : { delay: 0.08, duration: 0.5, ease }
+              reduced ? { duration: 0 } : { delay: 0.1, duration: 0.55, ease }
             }
           >
             Predict GPU cluster failures before they interrupt your jobs —
@@ -132,10 +128,10 @@ export function LandingPage() {
           </motion.p>
           <motion.div
             className="cta-row"
-            initial={{ opacity: 0, y: reduced ? 0 : 10 }}
+            initial={{ opacity: 0, y: reduced ? 0 : 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={
-              reduced ? { duration: 0 } : { delay: 0.16, duration: 0.45, ease }
+              reduced ? { duration: 0 } : { delay: 0.2, duration: 0.5, ease }
             }
           >
             <Link to="/app/demo" className="btn btn-on-dark">
@@ -154,7 +150,7 @@ export function LandingPage() {
           aria-hidden
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={reduced ? { duration: 0 } : { delay: 0.8, duration: 0.6 }}
+          transition={reduced ? { duration: 0 } : { delay: 0.9, duration: 0.6 }}
         >
           <span />
         </motion.div>
@@ -222,9 +218,14 @@ export function LandingPage() {
           transition={reduced ? { duration: 0 } : { duration: 0.6, ease }}
         >
           {can3d ? (
-            <Suspense fallback={<div className="fleet-3d-skeleton" />}>
-              <FleetRiskLandscape reduced={reduced} />
-            </Suspense>
+            <MountWhenVisible
+              rootMargin="220px"
+              fallback={<div className="fleet-3d-skeleton" />}
+            >
+              <Suspense fallback={<div className="fleet-3d-skeleton" />}>
+                <FleetRiskLandscape reduced={reduced} />
+              </Suspense>
+            </MountWhenVisible>
           ) : (
             <div className="fleet-3d-fallback">
               WebGL unavailable — open the dashboard for the live fleet map.
@@ -240,9 +241,11 @@ export function LandingPage() {
             <h2 className="section-title">Three modules. One decision loop.</h2>
           </div>
           {can3d ? (
-            <Suspense fallback={null}>
-              <PulseCoreMini reduced={reduced} />
-            </Suspense>
+            <MountWhenVisible rootMargin="160px" fallback={null}>
+              <Suspense fallback={null}>
+                <PulseCoreMini reduced={reduced} />
+              </Suspense>
+            </MountWhenVisible>
           ) : null}
         </motion.div>
 
@@ -343,13 +346,6 @@ export function LandingPage() {
       </section>
 
       <footer className="landing-footer landing-footer-3d">
-        {can3d ? (
-          <Suspense fallback={null}>
-            <div className="footer-3d" aria-hidden>
-              <HeroClusterScene reduced={reduced} />
-            </div>
-          </Suspense>
-        ) : null}
         <motion.div {...fade} className="landing-footer-inner">
           <h2>Ready to inspect the fleet?</h2>
           <p>Open the live dashboard on real historical snapshots.</p>
@@ -394,3 +390,5 @@ function ProofStat({
     </motion.div>
   )
 }
+
+
