@@ -84,7 +84,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [critical, setCritical] = useState(70)
   const [watch, setWatch] = useState(40)
   const [health, setHealth] = useState<HealthResponse | null>(null)
-  const [healthLoading, setHealthLoading] = useState(true)
+  const [healthLoading, setHealthLoading] = useState(false)
   const [tourDone, setTourDone] = useState(
     () => localStorage.getItem(TOUR_KEY) === '1',
   )
@@ -121,9 +121,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  useEffect(() => {
-    void reloadHealth()
-  }, [reloadHealth])
+  // Health is booted from AppShell so the landing page stays free of API wait.
 
   useEffect(() => {
     const cached = readCachedDemo(seed, demoRank)
@@ -252,3 +250,4 @@ export function useApp() {
   if (!ctx) throw new Error('useApp must be used within AppProvider')
   return ctx
 }
+
