@@ -186,12 +186,19 @@ export function EvidencePage() {
                     name="Baseline"
                     fill="var(--color-critical, #dc2626)"
                     radius={[6, 6, 0, 0]}
+                    isAnimationActive
+                    animationDuration={700}
+                    animationEasing="ease-out"
                   />
                   <Bar
                     dataKey="model"
                     name="ComputePulse AI"
                     fill="var(--color-healthy, #059669)"
                     radius={[6, 6, 0, 0]}
+                    isAnimationActive
+                    animationBegin={80}
+                    animationDuration={700}
+                    animationEasing="ease-out"
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -306,6 +313,9 @@ export function EvidencePage() {
                       dataKey="importance"
                       fill="url(#importanceGradient)"
                       radius={[0, 6, 6, 0]}
+                      isAnimationActive
+                      animationDuration={700}
+                      animationEasing="ease-out"
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -317,4 +327,5 @@ export function EvidencePage() {
     </div>
   )
 }
+
 
