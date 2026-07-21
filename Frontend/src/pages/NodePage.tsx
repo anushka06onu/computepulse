@@ -297,7 +297,13 @@ export function NodePage() {
                         />
                         <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-elevated)' }} />
 
-                        <Bar dataKey="impact" radius={[0, 6, 6, 0]} isAnimationActive>
+                        <Bar
+                          dataKey="impact"
+                          radius={[0, 6, 6, 0]}
+                          isAnimationActive
+                          animationDuration={700}
+                          animationEasing="ease-out"
+                        >
                           {shapData.map((s) => (
                             <Cell
                               key={s.feature}
@@ -472,4 +478,5 @@ function TimelineTooltip({ active, payload }: TimelineTooltipProps) {
     </div>
   )
 }
+
 

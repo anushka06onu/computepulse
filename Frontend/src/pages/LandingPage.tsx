@@ -1,6 +1,6 @@
+import { lazy, Suspense, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
-import { useMemo, useRef } from 'react'
 import {
   Activity,
   ArrowRight,
@@ -11,6 +11,23 @@ import {
 } from 'lucide-react'
 import { CountUp } from '../components/KPI'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { staggerContainer, staggerItem } from '../motion/presets'
+
+const HeroClusterScene = lazy(() =>
+  import('../components/landing/HeroClusterScene').then((m) => ({
+    default: m.HeroClusterScene,
+  })),
+)
+const FleetRiskLandscape = lazy(() =>
+  import('../components/landing/FleetRiskLandscape').then((m) => ({
+    default: m.FleetRiskLandscape,
+  })),
+)
+const PulseCoreMini = lazy(() =>
+  import('../components/landing/PulseCoreMini').then((m) => ({
+    default: m.PulseCoreMini,
+  })),
+)
 
 const reduced =
   typeof window !== 'undefined' &&
@@ -20,19 +37,10 @@ const ease = [0.22, 1, 0.36, 1] as const
 
 const fade = {
   initial: { opacity: 0, y: reduced ? 0 : 20 },
-  animate: { opacity: 1, y: 0 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.3 },
   transition: reduced ? { duration: 0 } : { duration: 0.55, ease },
 }
-
-const PARTICLES = Array.from({ length: 18 }, (_, i) => ({
-  id: i,
-  left: ((i * 41) % 100) + (i % 5) * 0.4,
-  top: ((i * 59) % 100) + (i % 4) * 0.3,
-  size: (i % 3) + 1.2,
-  dur: 7 + (i % 5),
-  y: 10 + (i % 6) * 2,
-  op: 0.12 + (i % 4) * 0.05,
-}))
 
 const MODULES = [
   {
@@ -56,28 +64,26 @@ const MODULES = [
 ]
 
 export function LandingPage() {
-  const particles = useMemo(() => PARTICLES, [])
+  const can3d = useMemo(() => {
+    if (typeof window === 'undefined') return false
+    try {
+      const c = document.createElement('canvas')
+      return !!(c.getContext('webgl') || c.getContext('experimental-webgl'))
+    } catch {
+      return false
+    }
+  }, [])
 
   return (
     <div className="landing">
       <div className="landing-visual" aria-hidden>
         <div className="landing-visual-glow landing-visual-glow-a" />
         <div className="landing-visual-glow landing-visual-glow-b" />
-        {particles.map((p) => (
-          <div
-            key={p.id}
-            className="particle"
-            style={{
-              left: `${p.left}%`,
-              top: `${p.top}%`,
-              width: p.size,
-              height: p.size,
-              ['--float-dur' as string]: `${p.dur}s`,
-              ['--float-y' as string]: `${p.y}px`,
-              ['--float-op' as string]: String(p.op),
-            }}
-          />
-        ))}
+        {can3d ? (
+          <Suspense fallback={null}>
+            <HeroClusterScene reduced={reduced} />
+          </Suspense>
+        ) : null}
       </div>
 
       <section className="landing-hero">
@@ -155,36 +161,89 @@ export function LandingPage() {
       </section>
 
       <section className="landing-section shift-section">
-        <motion.div {...fade}>
-          <p className="section-label">The shift</p>
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, amount: 0.35 }}
+        >
+          <motion.p className="section-label" variants={staggerItem}>
+            The shift
+          </motion.p>
           <div className="shift-grid">
-            <div className="shift-col shift-col-past">
+            <motion.div
+              className="shift-col shift-col-past"
+              variants={staggerItem}
+            >
               <span className="shift-tag">Before</span>
               <h2>Monitoring shows what is.</h2>
               <p>
                 Live gauges and alerts describe the present — useful, but always
                 a step behind failure.
               </p>
-            </div>
-            <div className="shift-divider" aria-hidden>
+            </motion.div>
+            <motion.div
+              className="shift-divider"
+              aria-hidden
+              variants={staggerItem}
+            >
               <ArrowRight size={18} strokeWidth={2.25} />
-            </div>
-            <div className="shift-col shift-col-next">
+            </motion.div>
+            <motion.div
+              className="shift-col shift-col-next"
+              variants={staggerItem}
+            >
               <span className="shift-tag">With ComputePulse</span>
               <h2>Prediction shows what will be.</h2>
               <p>
                 Failure risk, safer placement, and idle capacity — from ~6,500
                 real GPUs across ~1,800 machines.
               </p>
-            </div>
+            </motion.div>
           </div>
         </motion.div>
       </section>
 
-      <section className="landing-section">
+      <section className="landing-section landscape-section">
         <motion.div {...fade}>
-          <p className="section-label">Product</p>
-          <h2 className="section-title">Three modules. One decision loop.</h2>
+          <p className="section-label">Fleet landscape</p>
+          <h2 className="section-title">Real fleet risk landscape</h2>
+          <p className="section-lead">
+            Interactive 3D view of machine risk versus CPU and GPU pressure —
+            the same signal operators use to decide where the next job should
+            land.
+          </p>
+        </motion.div>
+        <motion.div
+          className="landscape-stage"
+          initial={{ opacity: 0, y: reduced ? 0 : 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.25 }}
+          transition={reduced ? { duration: 0 } : { duration: 0.6, ease }}
+        >
+          {can3d ? (
+            <Suspense fallback={<div className="fleet-3d-skeleton" />}>
+              <FleetRiskLandscape reduced={reduced} />
+            </Suspense>
+          ) : (
+            <div className="fleet-3d-fallback">
+              WebGL unavailable — open the dashboard for the live fleet map.
+            </div>
+          )}
+        </motion.div>
+      </section>
+
+      <section className="landing-section">
+        <motion.div {...fade} className="modules-head">
+          <div>
+            <p className="section-label">Product</p>
+            <h2 className="section-title">Three modules. One decision loop.</h2>
+          </div>
+          {can3d ? (
+            <Suspense fallback={null}>
+              <PulseCoreMini reduced={reduced} />
+            </Suspense>
+          ) : null}
         </motion.div>
 
         <div className="module-list">
@@ -195,7 +254,8 @@ export function LandingPage() {
                 key={m.n}
                 className="module-row"
                 initial={{ opacity: 0, y: reduced ? 0 : 16 }}
-                animate={{ opacity: 1, y: 0 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
                 transition={
                   reduced
                     ? { duration: 0 }
@@ -217,7 +277,13 @@ export function LandingPage() {
       </section>
 
       <section className="proof-strip">
-        <div className="proof-grid">
+        <motion.div
+          className="proof-grid"
+          variants={staggerContainer}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, amount: 0.4 }}
+        >
           <ProofStat
             end={88}
             decimals={0}
@@ -230,13 +296,22 @@ export function LandingPage() {
             decimals={3}
             label="Placement risk vs observed failures"
           />
-        </div>
+        </motion.div>
       </section>
 
       <section className="landing-section">
-        <motion.div {...fade}>
-          <p className="section-label">Pipeline</p>
-          <h2 className="section-title">How it works</h2>
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true, amount: 0.3 }}
+        >
+          <motion.p className="section-label" variants={staggerItem}>
+            Pipeline
+          </motion.p>
+          <motion.h2 className="section-title" variants={staggerItem}>
+            How it works
+          </motion.h2>
           <div className="pipeline">
             {[
               {
@@ -246,7 +321,11 @@ export function LandingPage() {
               { t: 'Models', d: 'LightGBM + SHAP explainability' },
               { t: 'Action', d: 'Place, avoid, reclaim capacity' },
             ].map((step, i) => (
-              <div key={step.t} className="pipeline-flow">
+              <motion.div
+                key={step.t}
+                className="pipeline-flow"
+                variants={staggerItem}
+              >
                 {i > 0 ? (
                   <span className="pipeline-arrow" aria-hidden>
                     <ArrowRight size={16} />
@@ -257,13 +336,20 @@ export function LandingPage() {
                   <strong>{step.t}</strong>
                   <p>{step.d}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>
       </section>
 
-      <footer className="landing-footer">
+      <footer className="landing-footer landing-footer-3d">
+        {can3d ? (
+          <Suspense fallback={null}>
+            <div className="footer-3d" aria-hidden>
+              <HeroClusterScene reduced={reduced} />
+            </div>
+          </Suspense>
+        ) : null}
         <motion.div {...fade} className="landing-footer-inner">
           <h2>Ready to inspect the fleet?</h2>
           <p>Open the live dashboard on real historical snapshots.</p>
@@ -296,7 +382,7 @@ function ProofStat({
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, amount: 0.35 })
   return (
-    <div className="proof-item" ref={ref}>
+    <motion.div className="proof-item" ref={ref} variants={staggerItem}>
       <div className="num">
         {inView ? (
           <CountUp end={end} decimals={decimals} suffix={suffix} />
@@ -305,6 +391,6 @@ function ProofStat({
         )}
       </div>
       <div className="lbl">{label}</div>
-    </div>
+    </motion.div>
   )
 }
