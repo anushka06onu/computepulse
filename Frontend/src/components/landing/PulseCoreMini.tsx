@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import type { Mesh } from 'three'
-import { useInViewport } from '../three/useInViewport'
+import { useInViewport } from '../../hooks/useInViewport'
 
 function Ring({
   reduced,
@@ -80,3 +80,4 @@ export function PulseCoreMini({ reduced = false }: { reduced?: boolean }) {
     </div>
   )
 }
+

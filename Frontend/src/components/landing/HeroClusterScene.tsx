@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { Group, InstancedMesh } from 'three'
 import { colorForRisk01 } from '../three/riskColors'
-import { useInViewport } from '../three/useInViewport'
+import { useInViewport } from '../../hooks/useInViewport'
 
 type NodePt = {
   position: THREE.Vector3
@@ -157,3 +157,4 @@ export function HeroClusterScene({ reduced = false }: { reduced?: boolean }) {
     </div>
   )
 }
+
