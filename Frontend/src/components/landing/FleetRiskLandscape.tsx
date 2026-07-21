@@ -5,7 +5,7 @@ import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from 
 import * as THREE from 'three'
 import type { Group, InstancedMesh } from 'three'
 import { colorForRiskPct, RISK_BG } from '../three/riskColors'
-import { useInViewport } from '../three/useInViewport'
+import { useInViewport } from '../../hooks/useInViewport'
 
 type Machine = {
   id: number
@@ -311,3 +311,4 @@ export function FleetRiskLandscape({ reduced = false }: { reduced?: boolean }) {
     </div>
   )
 }
+
