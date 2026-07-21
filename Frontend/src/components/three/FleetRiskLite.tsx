@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from 'react'
 import type { FleetNode } from '../../api/client'
 import { RiskCloud, type RiskPoint } from './RiskCloud'
 import { RISK_BG } from './riskColors'
-import { useInViewport } from './useInViewport'
+import { useInViewport } from '../../hooks/useInViewport'
 
 function toCloud(nodes: FleetNode[]): RiskPoint[] {
   return nodes.slice(0, 220).map((n) => {
@@ -90,3 +90,4 @@ export function FleetRiskLite({
     </div>
   )
 }
+

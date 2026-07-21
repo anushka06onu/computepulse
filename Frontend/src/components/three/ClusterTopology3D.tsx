@@ -6,7 +6,7 @@ import type { InstancedMesh } from 'three'
 import type { FleetNode } from '../../api/client'
 import { RiskCloud, type RiskPoint } from './RiskCloud'
 import { RISK_BG } from './riskColors'
-import { useInViewport } from './useInViewport'
+import { useInViewport } from '../../hooks/useInViewport'
 
 function layoutPoints(nodes: FleetNode[]): RiskPoint[] {
   const n = Math.max(1, nodes.length)
@@ -141,3 +141,4 @@ export function ClusterTopology3D({
     </div>
   )
 }
+
