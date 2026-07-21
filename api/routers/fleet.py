@@ -21,28 +21,16 @@ def fleet_snapshot(
     snap = store.get_snapshot(seed)
     use_seed = store.refresh_seed if seed is None else seed
 
-    rows = []
-    for _, r in snap.iterrows():
-        risk = float(r["risk_score"])
-        rows.append(
-            {
-                "node_id": int(r["node_id"]),
-                "risk_score": round(risk, 2),
-                "cpu_usage_pct": round(float(r["cpu_usage_pct"]), 2),
-                "gpu_usage_pct": round(float(r["gpu_usage_pct"]), 2),
-                "mem_pressure": round(float(r["mem_pressure"]), 3),
-                "duration_hours": round(float(r["duration_hours"]), 2),
-                "status": str(r["status"]),
-                "health": store.status_code(risk, critical, watch),
-            }
-        )
-    rows.sort(key=lambda x: x["risk_score"], reverse=True)
+    rows = [store.pack_node_row(r, critical, watch) for _, r in snap.iterrows()]
+    rows.sort(key=lambda x: x["fused_risk"], reverse=True)
 
     critical_n = sum(1 for x in rows if x["health"] == "critical")
     watch_n = sum(1 for x in rows if x["health"] == "watch")
     healthy_n = sum(1 for x in rows if x["health"] == "healthy")
 
     hs = store.health_score(snap)
+    drift = store.drift_psi(snap)
+    meta = store.meta()
 
     return {
         "seed": use_seed,
@@ -53,7 +41,12 @@ def fleet_snapshot(
             "healthy": healthy_n,
             "health_score": hs["score"],
             "grade": hs["grade"],
+            "fusion": hs["fusion"],
+            "model_version": meta["model_version"],
+            "feature_set": meta["feature_set"],
+            "trained_at": meta["trained_at"],
         },
+        "drift": drift,
         "nodes": rows,
         "caption": (
             "Historical trace resample — every value is real, from a different "
@@ -69,5 +62,4 @@ def refresh_fleet():
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
     seed = store.bump_seed()
-    # Invalidate is via new seed key in lru_cache
     return {"seed": seed}

@@ -10,6 +10,7 @@ import { EvidencePage } from './pages/EvidencePage'
 import { ComparePage } from './pages/ComparePage'
 import { ClusterMapPage } from './pages/ClusterMapPage'
 import { RunDemoPage } from './pages/RunDemoPage'
+import { WarningsPage } from './pages/WarningsPage'
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
             <Route path="fleet" element={<FleetPage />} />
             <Route path="map" element={<ClusterMapPage />} />
             <Route path="demo" element={<RunDemoPage />} />
+            <Route path="warnings" element={<WarningsPage />} />
             <Route path="nodes" element={<NodePage />} />
             <Route path="nodes/:nodeId" element={<NodePage />} />
             <Route path="placement" element={<PlacementPage />} />
@@ -35,3 +37,4 @@ export default function App() {
     </AppProvider>
   )
 }
+

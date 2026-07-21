@@ -114,8 +114,9 @@ export function ComparePage() {
                     <div>
                       <h2>Node {n.node_id}</h2>
                       <p className="panel-sub">
-                        <StatusBadge health={n.health} /> · {n.risk_score.toFixed(1)}%
-                        risk
+                        <StatusBadge health={n.health} /> · fused{' '}
+                        {n.fused_risk.toFixed(1)}% · risk {n.risk_score.toFixed(1)}%
+                        · anomaly {n.anomaly_score.toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -125,6 +126,10 @@ export function ComparePage() {
                       <span className="v">
                         {(n.historical_failure_rate * 100).toFixed(1)}%
                       </span>
+                    </div>
+                    <div className="metric-row">
+                      <span className="k">Fleet rank</span>
+                      <span className="v">#{n.fleet_rank}</span>
                     </div>
                     <div className="metric-row">
                       <span className="k">CPU %</span>
@@ -163,3 +168,4 @@ export function ComparePage() {
     </div>
   )
 }
+

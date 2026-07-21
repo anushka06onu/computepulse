@@ -7,6 +7,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -14,7 +15,7 @@ import {
 } from 'recharts'
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
-import { api, type NodeDetail } from '../api/client'
+import { api, type ExplainResponse, type NodeDetail } from '../api/client'
 import { useApp } from '../context/AppContext'
 import { KPI } from '../components/KPI'
 import { StatusBadge } from '../components/StatusBadge'
@@ -28,6 +29,7 @@ export function NodePage() {
   const { seed, critical, watch, health } = useApp()
   const [ids, setIds] = useState<number[]>([])
   const [data, setData] = useState<NodeDetail | null>(null)
+  const [brief, setBrief] = useState<ExplainResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
 
@@ -48,16 +50,37 @@ export function NodePage() {
     if (!nodeId || (health && !health.ready)) return
     let cancelled = false
     setData(null)
+    setBrief(null)
+    // Paint KPIs fast, then upgrade with SHAP/forecast + AI brief
     api
-      .node(Number(nodeId), seed, critical, watch)
+      .node(Number(nodeId), seed, critical, watch, { light: true })
       .then((d) => {
         if (!cancelled) setData(d)
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message)
       })
+    api
+      .node(Number(nodeId), seed, critical, watch, { forecast: true })
+      .then((d) => {
+        if (!cancelled) setData(d)
+      })
+      .catch(() => {
+        /* keep light payload */
+      })
+    const t = window.setTimeout(() => {
+      api
+        .explain(Number(nodeId), seed, critical, watch)
+        .then((b) => {
+          if (!cancelled) setBrief(b)
+        })
+        .catch(() => {
+          /* optional */
+        })
+    }, 50)
     return () => {
       cancelled = true
+      window.clearTimeout(t)
     }
   }, [nodeId, seed, critical, watch, health])
 
@@ -128,7 +151,9 @@ export function NodePage() {
             initial="initial"
             animate="animate"
           >
-            <KPI label="Risk score" value={`${data.risk_score.toFixed(1)}%`} />
+            <KPI label="Risk" value={`${data.risk_score.toFixed(1)}%`} />
+            <KPI label="Anomaly" value={data.anomaly_score.toFixed(2)} />
+            <KPI label="Fused" value={`${data.fused_risk.toFixed(1)}%`} tone="watch" />
             <div className="kpi">
               <div className="kpi-top">
                 <div className="label">Health</div>
@@ -138,8 +163,8 @@ export function NodePage() {
               </div>
             </div>
             <KPI
-              label="Instances on record"
-              value={data.instance_count.toLocaleString()}
+              label="Fleet rank"
+              value={`#${data.fleet_rank}`}
             />
             <KPI
               label="Historical failure"
@@ -151,6 +176,57 @@ export function NodePage() {
           <div className="skeleton" style={{ height: 180, marginBottom: 0 }} />
         )}
       </div>
+
+      {data && brief ? (
+        <Reveal delay={0.05}>
+          <div className="panel">
+            <div className="panel-inner-core">
+              <div className="panel-header">
+                <div>
+                  <h2>AI brief</h2>
+                  <p className="panel-sub">
+                    {brief.llm_used ? 'Groq rewrite' : 'Template'} ·{' '}
+                    {brief.embedding_used ? 'HF neighbors' : 'sklearn neighbors'}
+                    {data.model_version ? ` · ${data.model_version}` : ''}
+                  </p>
+                </div>
+              </div>
+              <p style={{ marginTop: 0 }}>{brief.summary}</p>
+              <div className="demo-chips" style={{ marginBottom: 12 }}>
+                {brief.shap_reasons.map((r) => (
+                  <span className="demo-chip" key={r}>
+                    {r}
+                  </span>
+                ))}
+              </div>
+              {brief.neighbors.length ? (
+                <p className="caption" style={{ marginBottom: 0 }}>
+                  Similar failed nodes:{' '}
+                  {brief.neighbors
+                    .map(
+                      (n) =>
+                        `${n.node_id} (risk ${n.risk_score}%, fail ${(n.historical_failure_rate * 100).toFixed(0)}%)`,
+                    )
+                    .join(' · ')}
+                </p>
+              ) : null}
+              <p className="caption">{brief.caveat}</p>
+            </div>
+          </div>
+        </Reveal>
+      ) : data ? (
+        <div className="panel">
+          <div className="panel-inner-core">
+            <div className="panel-header">
+              <div>
+                <h2>AI brief</h2>
+                <p className="panel-sub">Loading grounded brief…</p>
+              </div>
+            </div>
+            <div className="skeleton" style={{ height: 64 }} />
+          </div>
+        </div>
+      ) : null}
 
       {data ? (
         <>
@@ -247,7 +323,7 @@ export function NodePage() {
                   <div>
                     <h2>Risk over time — Node {data.node_id}</h2>
                     <p className="panel-sub">
-                      Model risk on the last {data.timeline.length} real instances
+                      Observed risk with dashed short-horizon forecast
                     </p>
                   </div>
                 </div>
@@ -297,7 +373,18 @@ export function NodePage() {
                           stroke="var(--color-accent)"
                           strokeWidth={2}
                           fill="url(#riskFill)"
+                          connectNulls={false}
                           isAnimationActive
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="forecast_risk"
+                          name="Forecast"
+                          stroke="var(--color-watch)"
+                          strokeWidth={2}
+                          strokeDasharray="6 4"
+                          dot={false}
+                          connectNulls
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -356,19 +443,27 @@ export function NodePage() {
 
 type TimelineTooltipProps = {
   active?: boolean
-  payload?: Array<{ payload?: { risk_score: number; status: string; index: number } }>
+  payload?: Array<{
+    payload?: {
+      risk_score: number | null
+      forecast_risk?: number | null
+      status: string
+      index: number
+    }
+  }>
 }
 
 function TimelineTooltip({ active, payload }: TimelineTooltipProps) {
   if (!active || !payload?.length) return null
   const p = payload[0]?.payload
   if (!p) return null
+  const val = p.forecast_risk ?? p.risk_score
   return (
     <div className="chart-tooltip-box">
       <p className="chart-tooltip-label">Instance #{p.index}</p>
       <div className="chart-tooltip-row">
-        <span>Risk</span>
-        <strong>{p.risk_score.toFixed(1)}%</strong>
+        <span>{p.forecast_risk != null ? 'Forecast' : 'Risk'}</span>
+        <strong>{val != null ? `${val.toFixed(1)}%` : '—'}</strong>
       </div>
       <div className="chart-tooltip-row">
         <span>Status</span>
@@ -377,3 +472,4 @@ function TimelineTooltip({ active, payload }: TimelineTooltipProps) {
     </div>
   )
 }
+

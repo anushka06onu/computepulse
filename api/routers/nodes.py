@@ -29,6 +29,8 @@ def get_node(
     seed: int | None = Query(None),
     critical: float = Query(70),
     watch: float = Query(40),
+    light: bool = Query(False),
+    forecast: bool = Query(True),
 ):
     try:
         store.ensure_loaded()
@@ -44,7 +46,10 @@ def get_node(
     row = match.iloc[0]
     history = store.data[store.data["node_id"] == node_id]
     risk = float(row["risk_score"])
+    anomaly = float(row["anomaly_score"])
+    fused = float(row["fused_risk"])
     duration = float(row["duration_hours"])
+    meta = store.meta()
 
     hist_tail = (
         history[
@@ -61,12 +66,20 @@ def get_node(
         .to_dict(orient="records")
     )
 
-    return {
+    payload = {
         "node_id": node_id,
         "risk_score": round(risk, 2),
-        "health": store.status_code(risk, critical, watch),
+        "anomaly_score": round(anomaly, 4),
+        "fused_risk": round(fused, 2),
+        "risk_percentile": round(float(row["risk_percentile"]), 2),
+        "fleet_rank": int(row["fleet_rank"]),
+        "health": store.status_code(fused, critical, watch),
         "instance_count": int(len(history)),
         "historical_failure_rate": round(float(history["will_fail"].mean()), 4),
+        "model_version": meta["model_version"],
+        "feature_set": meta["feature_set"],
+        "trained_at": meta["trained_at"],
+        "fusion": meta["fusion"],
         "snapshot": {
             "cpu_usage_pct": round(float(row["cpu_usage_pct"]), 2),
             "gpu_usage_pct": round(float(row["gpu_usage_pct"]), 2),
@@ -76,10 +89,19 @@ def get_node(
             "duration_hours": round(duration, 2) if duration >= 0 else None,
             "status": str(row["status"]),
         },
-        "shap": store.local_shap(row),
-        "timeline": store.node_timeline(node_id),
         "history": hist_tail,
     }
+    if light:
+        payload["shap"] = []
+        payload["timeline"] = store.node_timeline(
+            node_id, limit=20, include_forecast=False
+        )
+    else:
+        payload["shap"] = store.local_shap(row)
+        payload["timeline"] = store.node_timeline(
+            node_id, include_forecast=forecast
+        )
+    return payload
 
 
 @router.post("/compare")

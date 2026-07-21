@@ -39,11 +39,15 @@ export function PlacementPage() {
           </div>
           <h1>Smart Job Placement</h1>
           <p>
-            Model 2 ranks machines by aggregated Model 1 risk — correlated at{' '}
+            Policy <strong style={{ color: 'var(--ink)' }}>{data.policy ?? 'risk_anomaly_v2'}</strong>{' '}
+            ranks by fused risk + anomaly + history. Model 1↔fail correlation{' '}
             <strong style={{ color: 'var(--ink)' }}>
               r = {data.correlation.toFixed(3)}
-            </strong>{' '}
-            with observed failure rates.
+            </strong>
+            {data.lift
+              ? ` · offline lift ${(data.lift.relative_reduction_vs_risk_only * 100).toFixed(1)}% vs risk-only`
+              : ''}
+            .
           </p>
         </div>
         <div className="page-actions">
@@ -85,8 +89,12 @@ export function PlacementPage() {
             <div className="action-card-head">
               <span className="action-badge">Recommended action</span>
               <span className="action-delta">
-                −{(data.avoid[0].risk_score - data.top_pick.risk_score).toFixed(1)} pts
-                risk
+                +
+                {(
+                  (data.top_pick.score ?? 100 - data.top_pick.risk_score) -
+                  (data.avoid[0].score ?? 100 - data.avoid[0].risk_score)
+                ).toFixed(1)}{' '}
+                pts score
               </span>
             </div>
             <div className="action-move">
@@ -96,7 +104,7 @@ export function PlacementPage() {
                   Node {data.avoid[0].node_id}
                 </Link>
                 <span className="action-node-risk critical">
-                  {data.avoid[0].risk_score.toFixed(1)}% risk
+                  fused {data.avoid[0].fused_risk?.toFixed(1) ?? data.avoid[0].risk_score}%
                 </span>
               </div>
               <div className="action-arrow" aria-hidden>
@@ -108,7 +116,7 @@ export function PlacementPage() {
                   Node {data.top_pick.node_id}
                 </Link>
                 <span className="action-node-risk healthy">
-                  {data.top_pick.risk_score.toFixed(1)}% risk
+                  score {data.top_pick.score?.toFixed(1) ?? '—'}
                 </span>
               </div>
             </div>
@@ -135,7 +143,7 @@ export function PlacementPage() {
                 />
                 Recommended now
               </h2>
-              <p className="panel-sub">Lowest risk machines for the next job</p>
+              <p className="panel-sub">Highest placement score (safety + normality + history)</p>
             </div>
           </div>
           <div className="table-wrap">
@@ -143,9 +151,10 @@ export function PlacementPage() {
               <thead>
                 <tr>
                   <th>Node</th>
+                  <th>Score</th>
+                  <th>Fused %</th>
                   <th>Risk %</th>
-                  <th>CPU %</th>
-                  <th>GPU %</th>
+                  <th>Components</th>
                 </tr>
               </thead>
               <tbody>
@@ -154,9 +163,14 @@ export function PlacementPage() {
                     <td>
                       <Link to={`/app/nodes/${r.node_id}`}>{r.node_id}</Link>
                     </td>
+                    <td>{r.score ?? '—'}</td>
+                    <td>{r.fused_risk ?? '—'}</td>
                     <td>{r.risk_score}</td>
-                    <td>{r.cpu_usage_pct}</td>
-                    <td>{r.gpu_usage_pct}</td>
+                    <td style={{ fontSize: 12 }}>
+                      {r.components
+                        ? `S${r.components.safety} N${r.components.normality} H${r.components.history}`
+                        : '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -178,7 +192,7 @@ export function PlacementPage() {
                     />
                 Machines to avoid
               </h2>
-              <p className="panel-sub">Highest risk right now</p>
+              <p className="panel-sub">Lowest placement score</p>
             </div>
           </div>
           <div className="table-wrap">
@@ -186,9 +200,10 @@ export function PlacementPage() {
               <thead>
                 <tr>
                   <th>Node</th>
+                  <th>Score</th>
+                  <th>Fused %</th>
                   <th>Risk %</th>
-                  <th>CPU %</th>
-                  <th>GPU %</th>
+                  <th>Components</th>
                 </tr>
               </thead>
               <tbody>
@@ -197,9 +212,14 @@ export function PlacementPage() {
                     <td>
                       <Link to={`/app/nodes/${r.node_id}`}>{r.node_id}</Link>
                     </td>
+                    <td>{r.score ?? '—'}</td>
+                    <td>{r.fused_risk ?? '—'}</td>
                     <td>{r.risk_score}</td>
-                    <td>{r.cpu_usage_pct}</td>
-                    <td>{r.gpu_usage_pct}</td>
+                    <td style={{ fontSize: 12 }}>
+                      {r.components
+                        ? `S${r.components.safety} N${r.components.normality} H${r.components.history}`
+                        : '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -212,3 +232,4 @@ export function PlacementPage() {
     </div>
   )
 }
+

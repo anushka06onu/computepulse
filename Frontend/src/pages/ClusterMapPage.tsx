@@ -8,16 +8,16 @@ import { fadeIn } from '../motion/presets'
 
 type Filter = 'all' | Health
 
-function cellColor(risk: number): string {
-  if (risk >= 70) {
-    const t = Math.min(1, (risk - 70) / 30)
+function cellColor(fused: number): string {
+  if (fused >= 70) {
+    const t = Math.min(1, (fused - 70) / 30)
     return `color-mix(in oklab, var(--color-critical) ${55 + Math.round(t * 40)}%, transparent)`
   }
-  if (risk >= 40) {
-    const t = (risk - 40) / 30
+  if (fused >= 40) {
+    const t = (fused - 40) / 30
     return `color-mix(in oklab, var(--color-watch) ${45 + Math.round(t * 40)}%, transparent)`
   }
-  const t = risk / 40
+  const t = fused / 40
   return `color-mix(in oklab, var(--color-healthy) ${28 + Math.round(t * 47)}%, transparent)`
 }
 
@@ -70,8 +70,8 @@ export function ClusterMapPage() {
           </div>
           <h1>Cluster Map</h1>
           <p>
-            Every machine in the current snapshot as a single risk-colored cell.
-            Hover for detail, click to inspect.
+            Every machine colored by fused risk (risk + anomaly). Hover for
+            detail, click to inspect.
           </p>
         </div>
       </div>
@@ -131,8 +131,8 @@ export function ClusterMapPage() {
                 <button
                   key={n.node_id}
                   className={`cluster-cell ${n.health}`}
-                  style={{ backgroundColor: cellColor(n.risk_score) }}
-                  aria-label={`Node ${n.node_id}, risk ${n.risk_score.toFixed(0)}%, ${n.health}`}
+                  style={{ backgroundColor: cellColor(n.fused_risk) }}
+                  aria-label={`Node ${n.node_id}, fused ${n.fused_risk.toFixed(0)}%, ${n.health}`}
                   onClick={() => navigate(`/app/nodes/${n.node_id}`)}
                   onMouseEnter={(e) =>
                     setHover({ node: n, x: e.clientX, y: e.clientY })
@@ -153,8 +153,9 @@ export function ClusterMapPage() {
           style={{ left: hover.x + 14, top: hover.y + 14 }}
         >
           <strong>Node {hover.node.node_id}</strong>
+          <span>Fused {hover.node.fused_risk.toFixed(1)}%</span>
           <span>Risk {hover.node.risk_score.toFixed(1)}%</span>
-          <span>Health {(100 - hover.node.risk_score).toFixed(1)}</span>
+          <span>Anomaly {hover.node.anomaly_score.toFixed(2)}</span>
           <span className={`status ${hover.node.health}`}>
             <span className="status-dot" />
             {hover.node.health}
@@ -164,3 +165,4 @@ export function ClusterMapPage() {
     </div>
   )
 }
+

@@ -142,6 +142,15 @@ npm install
 npm run dev
 ```
 
+### One command (API + Frontend)
+
+```bash
+make dev
+# or: bash scripts/dev.sh
+```
+
+Starts FastAPI on :8000 and Vite on :5173 (Ctrl+C stops both).
+
 Open http://localhost:5173 — landing page + full dashboard under `/app/*`.
 
 ### 5. Streamlit fallback (optional)
@@ -165,6 +174,13 @@ Features: command palette (⌘K), CSV export, adjustable risk thresholds,
 node deep-links, onboarding tour, artifact readiness banner.
 ---
 
+## Operator Warning Agent
+
+In-app triage over existing scores (`/app/warnings`, `GET /api/warnings`):
+critical/watch nodes, rising forecast, drift, unsafe reclaim, model trust.
+Uses the same grounded explain path (template ± Groq/HF). Recommendations
+are projected only — not live scheduler moves. Rescan logs to `results/shadow_log.jsonl`.
+
 ## Honesty notes (know these before presenting to judges)
 
 - **The dataset does not label "optimal placement."** Module 2 is not a
@@ -177,9 +193,12 @@ node deep-links, onboarding tour, artifact readiness banner.
   ($2.50/GPU-hour, a public-cloud-adjacent estimate) because the real
   Alibaba trace is from an internal cluster and has no price list. This
   is stated on-screen everywhere the dollar figure appears.
-- **Hyperparameter search runs on a 150,000-row subsample** for speed
-  (standard practice), but the final model is fit on the full 637,265-row
-  training set using the best parameters found.
+- **On-disk engineered dataset** (`data/cluster_data_real.csv`) currently has
+  **~100,014 rows** (verify with `wc -l`). Published training notes that mention
+  a larger Alibaba-derived set refer to earlier full-trace runs; Evidence
+  `eval.n_rows` and `model_version` reflect whatever is loaded now.
+- **Hyperparameter search may use a subsample** for speed (standard practice);
+  check `results/eval_report.json` for the metrics that match this checkout.
 - **The "Fleet Overview" refresh is simulated**, not a live feed - this
   dataset is a static historical trace, not a live cluster connection.
   The dashboard says this explicitly rather than implying real-time data.

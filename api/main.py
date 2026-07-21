@@ -3,8 +3,16 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routers import demo, fleet, metrics, nodes, optimize, placement
+from api.routers import demo, explain, fleet, metrics, nodes, optimize, placement, warnings
 from api.services.store import health_status
+
+try:
+    from dotenv import load_dotenv
+    from pathlib import Path
+
+    load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+except ImportError:
+    pass
 
 app = FastAPI(
     title="ComputePulse API",
@@ -31,6 +39,8 @@ app.include_router(placement.router)
 app.include_router(optimize.router)
 app.include_router(metrics.router)
 app.include_router(demo.router)
+app.include_router(explain.router)
+app.include_router(warnings.router)
 
 
 @app.get("/api/health")

@@ -1,0 +1,24 @@
+{
+  "n_rows": 100014,
+  "n_test": 20003,
+  "roc_auc": 0.925900491001431,
+  "pr_auc": 0.8307398788792125,
+  "brier": 0.08654518499389728,
+  "ece": 0.020778280707834183,
+  "top5_recall": 0.20177612556794713,
+  "top10_recall": 0.3808343659644775,
+  "node_top5_recall": 0.06649395509499137,
+  "model_version": "model1@ae2618216a1a",
+  "feature_set": [
+    "task_role",
+    "cpu_usage_pct",
+    "gpu_usage_pct",
+    "mem_pressure",
+    "gpu_mem_pressure",
+    "cpu_gpu_ratio",
+    "io_bytes_total",
+    "io_ops_total",
+    "avg_io_size"
+  ],
+  "trained_at": null
+}

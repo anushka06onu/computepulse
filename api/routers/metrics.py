@@ -18,6 +18,8 @@ def metrics():
     m = store.model_results
     cv = store.cv_results
     cm = store.confusion
+    ev = store.eval_report
+    meta = store.meta()
 
     tp = float(cm.get("true_positive", 0))
     fn = float(cm.get("false_negative", 0))
@@ -48,6 +50,22 @@ def metrics():
             "auc_mean": float(cv.get("cv_auc_mean", 0)),
             "auc_std": float(cv.get("cv_auc_std", 0)),
         },
+        "eval": {
+            "pr_auc": float(ev.get("pr_auc", 0)),
+            "roc_auc": float(ev.get("roc_auc", 0)),
+            "ece": float(ev.get("ece", 0)),
+            "brier": float(ev.get("brier", 0)),
+            "top5_recall": float(ev.get("top5_recall", 0)),
+            "top10_recall": float(ev.get("top10_recall", 0)),
+            "node_top5_recall": float(ev.get("node_top5_recall", 0)),
+            "n_rows": int(ev.get("n_rows", 0)),
+            "n_test": int(ev.get("n_test", 0)),
+        },
+        "fusion": meta["fusion"],
+        "model_version": meta["model_version"],
+        "feature_set": meta["feature_set"],
+        "trained_at": meta["trained_at"],
+        "placement_lift": store.placement_lift or None,
         "confusion": {
             "true_negative": int(cm.get("true_negative", 0)),
             "false_positive": int(cm.get("false_positive", 0)),
