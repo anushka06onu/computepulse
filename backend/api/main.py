@@ -5,6 +5,8 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from api.routers import demo, explain, fleet, metrics, nodes, optimize, placement, warnings
 from api.services.store import health_status
@@ -47,6 +49,7 @@ app.add_middleware(
     allow_credentials=_allow_origins != ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+
 )
 
 app.include_router(fleet.router)
@@ -74,3 +77,18 @@ def warmup():
             store.ensure_loaded()
         except Exception as exc:  # noqa: BLE001
             print(f"Warmup skipped: {exc}")
+
+static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Frontend", "dist")
+if os.path.exists(static_dir):
+    assets_dir = os.path.join(static_dir, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{catchall:path}")
+    def serve_frontend(catchall: str):
+        if catchall.startswith("api"):
+            return {"detail": "Not Found"}
+        index_file = os.path.join(static_dir, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        return {"error": "Frontend build index.html not found"}
