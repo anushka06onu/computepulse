@@ -28,6 +28,9 @@ COPY results/ ./results
 # Copy compiled frontend build
 COPY --from=frontend-builder /app/Frontend/dist ./Frontend/dist
 
-EXPOSE 8000
+# Expose default Hugging Face / container port
+EXPOSE 7860
 
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run FastAPI using the dynamic PORT environment variable or fallback to 7860
+CMD ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-7860}"]
+
