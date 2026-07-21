@@ -2722,3 +2722,401 @@ tbody tr:hover {
 .warning-rec p {
   margin: 0 0 6px;
 }
+
+
+/* ─── Landing 3D scenes ─── */
+.landing-visual .hero-3d {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.88;
+}
+.hero-3d {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.hero-3d canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+.hero-3d-fade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, color-mix(in oklab, var(--l-hero-base, #0b1214) 82%, transparent) 0%, transparent 52%),
+    linear-gradient(180deg, transparent 55%, color-mix(in oklab, var(--l-hero-base, #0b1214) 75%, transparent) 100%);
+  pointer-events: none;
+}
+.landing {
+  --l-hero-base: #0c1416;
+}
+[data-theme="light"] .landing {
+  --l-hero-base: #eef6f5;
+}
+[data-theme="light"] .landing-visual .hero-3d {
+  opacity: 0.55;
+}
+[data-theme="light"] .hero-3d-fade {
+  background:
+    linear-gradient(90deg, color-mix(in oklab, #eef6f5 88%, transparent) 0%, transparent 55%),
+    linear-gradient(180deg, transparent 50%, color-mix(in oklab, #eef6f5 80%, transparent) 100%);
+}
+
+.landscape-section {
+  max-width: 1120px;
+}
+.section-lead {
+  margin: -12px 0 28px;
+  max-width: 52ch;
+  color: var(--l-ink-dim, var(--color-ink-muted));
+  line-height: 1.55;
+  font-size: 1.05rem;
+}
+.landscape-stage {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--l-ink, var(--color-ink)) 12%, transparent);
+  background: #0b1618;
+  min-height: 420px;
+  isolation: isolate;
+}
+.fleet-3d {
+  display: grid;
+  gap: 0;
+  background: #0b1618;
+}
+.fleet-3d-canvas {
+  position: relative;
+  height: min(56vh, 520px);
+  min-height: 380px;
+  width: 100%;
+  background: #0b1618;
+}
+.fleet-3d-canvas > div {
+  width: 100% !important;
+  height: 100% !important;
+}
+.fleet-3d-canvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  background: #0b1618;
+}
+.fleet-3d-chrome {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.fleet-3d-pill {
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, #fff 78%, transparent);
+  background: rgba(4, 16, 18, 0.88);
+  border: 1px solid color-mix(in oklab, #5eead4 28%, transparent);
+}
+.fleet-3d-axis-overlay {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  gap: 12px;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, #fff 48%, transparent);
+  pointer-events: none;
+}
+.fleet-3d-hud {
+  position: absolute;
+  left: 16px;
+  bottom: 40px;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(4, 16, 18, 0.92);
+  border: 1px solid color-mix(in oklab, #fff 12%, transparent);
+  color: color-mix(in oklab, #fff 78%, transparent);
+  font-size: 0.78rem;
+  pointer-events: none;
+}
+.fleet-3d-hud strong {
+  color: #fff;
+  font-weight: 650;
+  margin-right: 4px;
+}
+.fleet-3d-axis-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, #fff 55%, transparent);
+  white-space: nowrap;
+}
+.fleet-3d-scale {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, #fff 55%, transparent);
+  pointer-events: none;
+}
+.fleet-3d-scale-bar {
+  width: 8px;
+  height: 120px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #c44b3c 0%, #2a9d8f 100%);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, #fff 18%, transparent);
+}
+.fleet-3d-scale em {
+  font-style: normal;
+  font-weight: 650;
+  color: color-mix(in oklab, #fff 72%, transparent);
+}
+.fleet-3d-meta {
+  padding: 14px 18px 16px;
+  border-top: 1px solid color-mix(in oklab, #fff 10%, transparent);
+  background: color-mix(in oklab, #0b1214 88%, transparent);
+}
+.fleet-3d-meta p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: color-mix(in oklab, #fff 72%, transparent);
+  line-height: 1.45;
+}
+.fleet-3d-meta strong {
+  color: #fff;
+  font-weight: 650;
+}
+.fleet-3d-skeleton,
+.fleet-3d-fallback {
+  min-height: 380px;
+  display: grid;
+  place-items: center;
+  color: color-mix(in oklab, #fff 55%, transparent);
+  padding: 24px;
+  text-align: center;
+}
+.fleet-3d-skeleton {
+  background: linear-gradient(110deg, #152022 25%, #1c2c2f 40%, #152022 55%);
+  background-size: 200% 100%;
+  animation: fleetShimmer 1.4s ease-in-out infinite;
+}
+@keyframes fleetShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.modules-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 8px;
+}
+.pulse-core-mini {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--color-accent) 28%, transparent);
+  background: color-mix(in oklab, var(--color-accent) 8%, transparent);
+}
+.pulse-core-mini canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.landing-footer-3d {
+  position: relative;
+  overflow: hidden;
+}
+.landing-footer-3d .footer-3d {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  pointer-events: none;
+}
+.landing-footer-3d .landing-footer-inner {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 720px) {
+  .modules-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .pulse-core-mini {
+    width: 88px;
+    height: 88px;
+  }
+  .fleet-3d-canvas {
+    min-height: 300px;
+    height: 48vh;
+  }
+  .landscape-stage {
+    min-height: 320px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fleet-3d-skeleton {
+    animation: none;
+  }
+}
+
+/* ─── Cluster Map / Fleet lite 3D ─── */
+.map-3d {
+  position: relative;
+  height: min(58vh, 520px);
+  min-height: 380px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #0b1618;
+}
+.map-3d canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+.map-3d-hud {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(4, 16, 18, 0.92);
+  border: 1px solid color-mix(in oklab, #fff 12%, transparent);
+  color: color-mix(in oklab, #fff 78%, transparent);
+  font-size: 0.78rem;
+  pointer-events: none;
+}
+.map-3d-hud strong {
+  color: #fff;
+  font-weight: 650;
+}
+.map-3d-hud em {
+  font-style: normal;
+  color: #5eead4;
+}
+.map-3d-hud.muted {
+  opacity: 0.85;
+}
+.view-toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.fleet-lite-panel {
+  grid-column: 1 / -1;
+}
+.fleet-insights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  align-items: stretch;
+}
+.fleet-insights .panel {
+  margin-bottom: 0;
+  height: 100%;
+}
+.fleet-insights-cloud .panel-header {
+  align-items: flex-start;
+}
+.fleet-lite-3d {
+  position: relative;
+  height: 280px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #0b1618;
+  border: 1px solid color-mix(in oklab, var(--color-border) 80%, transparent);
+}
+.fleet-lite-3d canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+.fleet-lite-chrome {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.fleet-lite-scale {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, #fff 50%, transparent);
+}
+.fleet-lite-scale-bar {
+  width: 6px;
+  height: 88px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #c44b3c 0%, #2a9d8f 100%);
+}
+.fleet-lite-caption {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  z-index: 2;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 0.75rem;
+  color: color-mix(in oklab, #fff 72%, transparent);
+  pointer-events: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(4, 16, 18, 0.88);
+  border: 1px solid color-mix(in oklab, #fff 10%, transparent);
+}
+.fleet-lite-caption strong {
+  color: #fff;
+  font-weight: 650;
+}
+
+@media (max-width: 960px) {
+  .fleet-insights {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .map-3d {
+    min-height: 300px;
+    height: 48vh;
+  }
+}

@@ -17,7 +17,7 @@ import {
 import { useApp } from '../context/AppContext'
 import { KPI, CountUp } from '../components/KPI'
 import { Reveal } from '../components/Reveal'
-import { staggerContainer } from '../motion/presets'
+import { slideInRight, staggerContainer, staggerItem } from '../motion/presets'
 
 type Filter = 'all' | WarningSeverity
 
@@ -194,25 +194,33 @@ export function WarningsPage() {
                 </div>
               </div>
               <div className="warnings-list">
-                {filtered.map((a) => (
-                  <button
-                    key={a.id}
-                    type="button"
-                    className={`warning-row${selectedId === a.id ? ' active' : ''}`}
-                    onClick={() => setSelectedId(a.id)}
-                  >
-                    <span className={`sev-pill ${a.severity}`}>{a.severity}</span>
-                    <span className="warning-row-body">
-                      <strong>{a.title}</strong>
-                      <em>{a.type.replace(/_/g, ' ')}</em>
-                    </span>
-                    {a.scores.fused != null ? (
-                      <span className="warning-fused">
-                        {Number(a.scores.fused).toFixed(0)}%
+                <motion.div
+                  variants={staggerContainer}
+                  initial="initial"
+                  animate="animate"
+                  key={filter}
+                >
+                  {filtered.map((a) => (
+                    <motion.button
+                      key={a.id}
+                      type="button"
+                      variants={staggerItem}
+                      className={`warning-row${selectedId === a.id ? ' active' : ''}`}
+                      onClick={() => setSelectedId(a.id)}
+                    >
+                      <span className={`sev-pill ${a.severity}`}>{a.severity}</span>
+                      <span className="warning-row-body">
+                        <strong>{a.title}</strong>
+                        <em>{a.type.replace(/_/g, ' ')}</em>
                       </span>
-                    ) : null}
-                  </button>
-                ))}
+                      {a.scores.fused != null ? (
+                        <span className="warning-fused">
+                          {Number(a.scores.fused).toFixed(0)}%
+                        </span>
+                      ) : null}
+                    </motion.button>
+                  ))}
+                </motion.div>
                 {!filtered.length ? (
                   <p className="caption">No alerts for this filter.</p>
                 ) : null}
@@ -225,7 +233,12 @@ export function WarningsPage() {
           <div className="panel" style={{ marginBottom: 0 }}>
             <div className="panel-inner-core">
               {selected ? (
-                <>
+                <motion.div
+                  key={selected.id}
+                  variants={slideInRight}
+                  initial="hidden"
+                  animate="visible"
+                >
                   <div className="panel-header">
                     <div>
                       <h2>{selected.title}</h2>
@@ -305,7 +318,7 @@ export function WarningsPage() {
                     </Link>
                   </div>
                   <p className="caption">{selected.caveat}</p>
-                </>
+                </motion.div>
               ) : (
                 <p className="caption">Select an alert to inspect.</p>
               )}
@@ -320,3 +333,4 @@ export function WarningsPage() {
     </div>
   )
 }
+
