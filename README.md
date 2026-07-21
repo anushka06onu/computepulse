@@ -6,9 +6,30 @@ evaluated on **real Alibaba production cluster data**, not synthetic data.
 
 **Prometheus shows what IS. ComputePulse predicts what WILL BE.**
 
-This is not a single-chart demo. It's an interactive, multi-tab tool a
-cluster researcher could actually open and use to decide which real
-machine to trust with their next job.
+## Repository layout
+
+| Path | What |
+|------|------|
+| [`backend/`](backend/) | FastAPI API, ML training scripts, `data/`, `models/`, `results/` |
+| [`Frontend/`](Frontend/) | React + Vite UI |
+| [`scripts/dev.sh`](scripts/dev.sh) | Local: API `:8000` + Vite `:5173` |
+| [`render.yaml`](render.yaml) | Render Blueprint → deploys `backend/` |
+
+### Local development
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r backend/requirements.txt
+cd Frontend && npm install && cd ..
+make dev
+```
+
+- API: http://127.0.0.1:8000/docs  
+- UI: http://localhost:5173  
+
+### Deploy backend on Render
+
+See **[backend/README.md](backend/README.md)** for the full checklist (Root Directory = `backend`, start command, CORS, `VITE_API_BASE`).
 
 ---
 

@@ -1,0 +1,2 @@
+model_version=model1@ae2618216a1a
+n_rows=100014

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,9 +11,11 @@ from api.services.store import health_status
 
 try:
     from dotenv import load_dotenv
-    from pathlib import Path
 
-    load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+    backend_root = Path(__file__).resolve().parents[1]
+    load_dotenv(backend_root / ".env")
+    # Optional monorepo root .env
+    load_dotenv(backend_root.parent / ".env")
 except ImportError:
     pass
 
@@ -20,15 +25,26 @@ app = FastAPI(
     version="1.0.0",
 )
 
+_default_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+]
+_extra = [
+    o.strip()
+    for o in os.getenv("FRONTEND_ORIGINS", os.getenv("FRONTEND_ORIGIN", "")).split(",")
+    if o.strip()
+]
+_allow_origins = _default_origins + _extra
+# Render / production: set FRONTEND_ORIGINS=https://your-frontend.vercel.app
+if os.getenv("CORS_ALLOW_ALL", "").lower() in {"1", "true", "yes"}:
+    _allow_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:4173",
-        "http://127.0.0.1:4173",
-    ],
-    allow_credentials=True,
+    allow_origins=_allow_origins,
+    allow_credentials=_allow_origins != ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -58,4 +74,3 @@ def warmup():
             store.ensure_loaded()
         except Exception as exc:  # noqa: BLE001
             print(f"Warmup skipped: {exc}")
-

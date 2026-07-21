@@ -1,26 +1,31 @@
-# Data files (large)
-data/
+# Data — allow API runtime CSV (ignore other raw dumps)
+backend/data/*
+!backend/data/cluster_data_real.csv
 
-# Model pickle files
-models/*.pkl
+# Models — allow pickles required by API
+backend/models/*
+!backend/models/*.pkl
 
-# Results and artifacts
-results/*.txt
-results/*.csv
+# Results — allow API metrics/artifacts
+backend/results/*
+!backend/results/*.txt
+!backend/results/*.csv
+!backend/results/*.json
+!backend/results/*.jsonl
 
 # Python caches
 __pycache__/
 *.pyc
 .venv/
+backend/.venv/
 
 # Frontend
 Frontend/node_modules/
 Frontend/dist/
 
-# Local dev configs
+# Local secrets
 .DS_Store
 .env
 .env.*
 !.env.example
-
-
+!backend/.env.example

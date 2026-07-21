@@ -3,6 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BACKEND="$ROOT/backend"
 cd "$ROOT"
 
 if [[ -f .venv/bin/activate ]]; then
@@ -11,6 +12,9 @@ if [[ -f .venv/bin/activate ]]; then
 elif [[ -f venv/bin/activate ]]; then
   # shellcheck disable=SC1091
   source venv/bin/activate
+elif [[ -f "$BACKEND/.venv/bin/activate" ]]; then
+  # shellcheck disable=SC1091
+  source "$BACKEND/.venv/bin/activate"
 fi
 
 cleanup() {
@@ -25,12 +29,15 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-echo "API  → http://127.0.0.1:8000"
-echo "Web  → http://localhost:5173"
+echo "API  → http://127.0.0.1:8000  (backend/)"
+echo "Web  → http://localhost:5173  (Frontend/)"
 echo "Ctrl+C to stop both."
 echo
 
-uvicorn api.main:app --reload --host 127.0.0.1 --port 8000 &
+(
+  cd "$BACKEND"
+  uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
+) &
 API_PID=$!
 
 (

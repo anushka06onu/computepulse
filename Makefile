@@ -1,22 +1,27 @@
-.PHONY: eval eval-report anomaly horizon train-ai faithfulness dev
+.PHONY: eval eval-report anomaly horizon train-ai faithfulness dev api
+
+BACKEND=backend
 
 eval:
-	python scripts/run_eval_suite.py
+	cd $(BACKEND) && python scripts/run_eval_suite.py
 
 eval-report:
-	python scripts/eval_report.py
+	cd $(BACKEND) && python scripts/eval_report.py
 
 anomaly:
-	python train_anomaly.py
+	cd $(BACKEND) && python train_anomaly.py
 
 horizon:
-	python train_horizon.py
+	cd $(BACKEND) && python train_horizon.py
 
 train-ai: anomaly horizon eval-report
 	python -c "print('AI artifacts ready')"
 
 faithfulness:
-	python scripts/faithfulness_explain.py
+	cd $(BACKEND) && python scripts/faithfulness_explain.py
+
+api:
+	cd $(BACKEND) && uvicorn api.main:app --reload --host 127.0.0.1 --port 8000
 
 dev:
 	bash scripts/dev.sh
