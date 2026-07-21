@@ -124,7 +124,14 @@ export function OptimizePage() {
                     tickLine={false}
                   />
                   <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-elevated)' }} />
-                  <Bar dataKey="savings" fill="url(#savingsGradient)" radius={[6, 6, 0, 0]} />
+                  <Bar
+                    dataKey="savings"
+                    fill="url(#savingsGradient)"
+                    radius={[6, 6, 0, 0]}
+                    isAnimationActive
+                    animationDuration={750}
+                    animationEasing="ease-out"
+                  />
                   <defs>
                     <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="var(--color-healthy)" stopOpacity={1}/>
@@ -189,4 +196,5 @@ export function OptimizePage() {
     </div>
   )
 }
+
 
