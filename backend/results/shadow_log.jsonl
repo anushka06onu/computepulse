@@ -112,3 +112,5 @@
 {"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784659991.161342}
 {"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784659994.0063202}
 {"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784659996.910121}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784660123.442484}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784660126.2384372}
