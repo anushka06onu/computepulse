@@ -92,3 +92,4 @@
 {"event": "demo", "from": 1481, "to": 1196, "health_before": 10.7, "health_after": 97.0, "placement_delta": 86.8, "seed": 0, "rank": 5, "ts": 1784586484.720408}
 {"event": "demo", "from": 1391, "to": 1196, "health_before": 11.7, "health_after": 97.0, "placement_delta": 78.9, "seed": 0, "rank": 6, "ts": 1784586484.7918022}
 {"event": "demo", "from": 658, "to": 1196, "health_before": 13.5, "health_after": 97.0, "placement_delta": 77.8, "seed": 0, "rank": 7, "ts": 1784586484.854232}
+{"event": "demo", "from": 1477, "to": 1196, "health_before": 6.0, "health_after": 97.0, "placement_delta": 85.9, "seed": 0, "rank": 0, "ts": 1784655590.725062}
