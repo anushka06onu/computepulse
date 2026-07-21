@@ -1,3 +1,6 @@
+import { motion } from 'framer-motion'
+import { tooltipEnter } from '../motion/presets'
+
 type TooltipEntry = {
   name?: string | number
   value?: string | number
@@ -14,7 +17,10 @@ export function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   if (!active || !payload?.length) return null
 
   return (
-    <div
+    <motion.div
+      variants={tooltipEnter}
+      initial="hidden"
+      animate="visible"
       style={{
         background: 'var(--color-glass, var(--panel))',
         backdropFilter: 'blur(12px)',
@@ -71,6 +77,6 @@ export function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
           </div>
         ))}
       </div>
-    </div>
+    </motion.div>
   )
 }

@@ -113,7 +113,15 @@ export function AppShell() {
                   <Icon size={17} strokeWidth={2} />
                   {l.label}
                   {l.to === '/app/warnings' && warnCount > 0 ? (
-                    <span className="nav-badge">{warnCount > 99 ? '99+' : warnCount}</span>
+                    <motion.span
+                      className="nav-badge"
+                      key={warnCount}
+                      initial={{ scale: 0.7, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 18 }}
+                    >
+                      {warnCount > 99 ? '99+' : warnCount}
+                    </motion.span>
                   ) : null}
                 </NavLink>
               )
@@ -135,7 +143,17 @@ export function AppShell() {
               }
             }}
           >
-            <RefreshCw size={15} className={busy ? undefined : undefined} />
+            <motion.span
+              animate={busy ? { rotate: 360 } : { rotate: 0 }}
+              transition={
+                busy
+                  ? { repeat: Infinity, duration: 0.85, ease: 'linear' }
+                  : { duration: 0.2 }
+              }
+              style={{ display: 'inline-flex' }}
+            >
+              <RefreshCw size={15} />
+            </motion.span>
             {busy ? 'Refreshing…' : 'Refresh snapshot'}
           </button>
           <button
@@ -230,4 +248,5 @@ export function AppShell() {
     </div>
   )
 }
+
 
