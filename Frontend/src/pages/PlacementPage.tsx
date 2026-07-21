@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { ArrowRight, CheckCircle2, Download, Sparkles, XCircle } from 'lucide-react'
 import { api, downloadCsv, type PlacementResponse } from '../api/client'
 import { useApp } from '../context/AppContext'
 import { Reveal } from '../components/Reveal'
+import { scaleIn } from '../motion/presets'
 
 export function PlacementPage() {
   const { seed, health } = useApp()
@@ -85,7 +87,12 @@ export function PlacementPage() {
         </div>
 
         {data.top_pick && data.avoid.length ? (
-          <div className="action-card">
+          <motion.div
+            className="action-card"
+            variants={scaleIn}
+            initial="hidden"
+            animate="visible"
+          >
             <div className="action-card-head">
               <span className="action-badge">Recommended action</span>
               <span className="action-delta">
@@ -107,9 +114,23 @@ export function PlacementPage() {
                   fused {data.avoid[0].fused_risk?.toFixed(1) ?? data.avoid[0].risk_score}%
                 </span>
               </div>
-              <div className="action-arrow" aria-hidden>
+              <motion.div
+                className="action-arrow"
+                aria-hidden
+                animate={
+                  typeof window !== 'undefined' &&
+                  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                    ? undefined
+                    : { x: [0, 6, 0] }
+                }
+                transition={{
+                  duration: 1.4,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+              >
                 <ArrowRight size={22} />
-              </div>
+              </motion.div>
               <div className="action-node to">
                 <span className="action-node-label">Onto</span>
                 <Link to={`/app/nodes/${data.top_pick.node_id}`}>
@@ -126,7 +147,7 @@ export function PlacementPage() {
                 ? `Target node's historical failure rate is ${(data.top_pick.actual_failure_rate * 100).toFixed(1)}%.`
                 : 'Target node is the lowest-risk machine in this snapshot.'}
             </p>
-          </div>
+          </motion.div>
         ) : null}
       </Reveal>
 
@@ -232,4 +253,5 @@ export function PlacementPage() {
     </div>
   )
 }
+
 
