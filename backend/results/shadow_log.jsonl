@@ -93,3 +93,22 @@
 {"event": "demo", "from": 1391, "to": 1196, "health_before": 11.7, "health_after": 97.0, "placement_delta": 78.9, "seed": 0, "rank": 6, "ts": 1784586484.7918022}
 {"event": "demo", "from": 658, "to": 1196, "health_before": 13.5, "health_after": 97.0, "placement_delta": 77.8, "seed": 0, "rank": 7, "ts": 1784586484.854232}
 {"event": "demo", "from": 1477, "to": 1196, "health_before": 6.0, "health_after": 97.0, "placement_delta": 85.9, "seed": 0, "rank": 0, "ts": 1784655590.725062}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784659454.310507}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784659457.29026}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784659534.963222}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784659535.692148}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784659536.330704}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784659536.96399}
+{"event": "demo", "from": 1477, "to": 1196, "health_before": 6.0, "health_after": 97.0, "placement_delta": 85.9, "seed": 0, "rank": 0, "ts": 1784659568.706862}
+{"event": "demo", "from": 659, "to": 1196, "health_before": 6.4, "health_after": 97.0, "placement_delta": 84.6, "seed": 0, "rank": 1, "ts": 1784659583.0332952}
+{"event": "demo", "from": 1521, "to": 1196, "health_before": 6.9, "health_after": 97.0, "placement_delta": 87.4, "seed": 0, "rank": 2, "ts": 1784659593.996591}
+{"event": "demo", "from": 187, "to": 1196, "health_before": 10.7, "health_after": 97.0, "placement_delta": 82.7, "seed": 0, "rank": 3, "ts": 1784659613.0027342}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784659941.2645462}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784659945.7343638}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784659948.5781288}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784659960.249548}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784659962.382486}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784659965.2643158}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784659991.161342}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784659994.0063202}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784659996.910121}
