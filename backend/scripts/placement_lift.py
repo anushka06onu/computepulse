@@ -11,7 +11,7 @@ W_RISK, W_ANOMALY = 0.75, 0.25
 
 def main() -> None:
     data = pd.read_csv(ROOT / "data/cluster_data_real.csv")
-    with open(ROOT / "models/model1.pkl", "rb") as f:
+    with open(ROOT / "models/failure_risk_model.pkl", "rb") as f:
         m1 = pickle.load(f)
     with open(ROOT / "models/model_anomaly.pkl", "rb") as f:
         anom = pickle.load(f)
@@ -45,3 +45,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

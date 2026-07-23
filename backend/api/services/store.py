@@ -48,9 +48,13 @@ W_RISK = 0.75
 W_ANOMALY = 0.25
 FUSION = {"w_risk": W_RISK, "w_anomaly": W_ANOMALY}
 
+# On-disk artifact + plain-language label shown in the product UI.
+RISK_MODEL_FILE = "models/failure_risk_model.pkl"
+RISK_MODEL_LABEL = "Failure risk model"
+
 REQUIRED = {
     "data/cluster_data_real.csv": "python prepare_dataset.py",
-    "models/model1.pkl": "python train_model.py",
+    RISK_MODEL_FILE: "python train_model.py",
     "models/model_anomaly.pkl": "python train_anomaly.py",
     "results/baseline_results.txt": "python baseline_model.py",
     "results/model_results.txt": "python train_model.py",
@@ -108,8 +112,9 @@ def health_status() -> dict[str, Any]:
 
 
 def _model_version_from_pkl(path: Path) -> str:
-    h = hashlib.sha256(path.read_bytes()).hexdigest()[:12]
-    return f"model1@{h}"
+    """Plain-language model label for the UI (no hash / no internal codes)."""
+    _ = path  # kept so callers stay unchanged if we stamp builds later
+    return RISK_MODEL_LABEL
 
 
 class Store:
@@ -131,7 +136,7 @@ class Store:
         self.model3_summary: dict[str, Any] = {}
         self.eval_report: dict[str, Any] = {}
         self.placement_lift: dict[str, Any] = {}
-        self.model_version: str = "model1@unknown"
+        self.model_version: str = RISK_MODEL_LABEL
         self.feature_set: list[str] = list(FEATURES)
         self.trained_at: str | None = None
         self.refresh_seed = 0
@@ -147,7 +152,7 @@ class Store:
                 "Missing artifacts: " + ", ".join(m["file"] for m in missing)
             )
         self.data = pd.read_csv(_path("data/cluster_data_real.csv"))
-        model_path = _path("models/model1.pkl")
+        model_path = _path(RISK_MODEL_FILE)
         with model_path.open("rb") as f:
             self.model = pickle.load(f)
         self.explainer = shap.TreeExplainer(self.model)
@@ -187,8 +192,9 @@ class Store:
         eval_path = _path("results/eval_report.json")
         self.eval_report = json.loads(eval_path.read_text())
         self.feature_set = list(self.eval_report.get("feature_set", FEATURES))
-        if self.eval_report.get("model_version"):
-            self.model_version = str(self.eval_report["model_version"])
+        # Always expose the plain product name (never legacy model1@… codes).
+        self.model_version = RISK_MODEL_LABEL
+        self.eval_report["model_version"] = RISK_MODEL_LABEL
 
         lift_path = _path("results/placement_lift.json")
         if lift_path.exists():
@@ -201,6 +207,26 @@ class Store:
             self._ref_feature_stds[col] = float(series.std() or 1.0)
 
         self._ready = True
+
+    def reload_eval_metrics(self) -> None:
+        """Re-read lightweight metric artifacts (safe after repair scripts)."""
+        self.ensure_loaded()
+        self.baseline_results = read_key_value_file(
+            _path("results/baseline_results.txt")
+        )
+        self.model_results = read_key_value_file(_path("results/model_results.txt"))
+        self.cv_results = read_key_value_file(_path("results/cv_results.txt"))
+        self.confusion = read_key_value_file(_path("results/confusion_matrix.txt"))
+        self.feature_importance = read_key_value_file(
+            _path("results/feature_importance.txt")
+        )
+        eval_path = _path("results/eval_report.json")
+        if eval_path.exists():
+            self.eval_report = json.loads(eval_path.read_text())
+            self.eval_report["model_version"] = RISK_MODEL_LABEL
+        lift_path = _path("results/placement_lift.json")
+        if lift_path.exists():
+            self.placement_lift = json.loads(lift_path.read_text())
 
     def meta(self) -> dict[str, Any]:
         return {
@@ -447,3 +473,4 @@ class Store:
 
 
 store = Store()
+

@@ -100,6 +100,31 @@ export interface NodeDetail {
   }>
 }
 
+export interface DemoCandidate {
+  rank: number
+  node_id: number
+  placement_score: number
+  fused_risk: number
+  risk_score: number
+  components?: {
+    safety: number
+    normality: number
+    history: number
+  }
+  selected: boolean
+}
+
+export interface DemoCostSavings {
+  estimated_usd: number
+  risk_reduction_pp: number
+  probability_avoided: number
+  assumed_job_gpu_hours: number
+  assumed_cost_per_gpu_hour: number
+  assumed_incident_overhead_usd: number
+  formula: string
+  caveat: string
+}
+
 export interface DemoScenario {
   seed: number
   rank?: number
@@ -124,6 +149,8 @@ export interface DemoScenario {
     health: number
     actual_failure_rate: number | null
   }
+  candidates?: DemoCandidate[]
+  cost_savings?: DemoCostSavings
   health_before: number
   health_after: number
   placement_delta?: number
@@ -202,6 +229,21 @@ export interface MetricsResponse {
     node_top5_recall: number
     n_rows: number
     n_test: number
+    provenance?: string
+    computed_at?: string
+    split?: { test_size: number; random_state: number; stratify: string }
+  }
+  provenance?: {
+    real: boolean
+    source: string
+    dataset: string
+    n_rows: number
+    n_test: number
+    split?: { test_size: number; random_state: number; stratify: string }
+    baseline: string
+    model: string
+    note: string
+    computed_at?: string
   }
   fusion?: { w_risk: number; w_anomaly: number }
   model_version?: string
@@ -218,7 +260,7 @@ export interface MetricsResponse {
     true_positive: number
     failures_caught: number
   }
-  feature_importance: Array<{ feature: string; importance: number }>
+  feature_importance: Array<{ feature: string; importance: number; raw?: number }>
   comparison: Array<{ metric: string; baseline: number; model: number }>
 }
 
@@ -415,3 +457,4 @@ export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   a.click()
   URL.revokeObjectURL(url)
 }
+

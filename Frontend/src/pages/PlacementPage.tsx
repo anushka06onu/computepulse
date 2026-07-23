@@ -151,58 +151,58 @@ export function PlacementPage() {
         ) : null}
       </Reveal>
 
-      <div className="grid-2">
+      <div className="grid-2 placement-boards">
         <Reveal delay={0.1}>
-          <div className="panel">
+          <div className="panel" style={{ marginBottom: 0, height: '100%' }}>
             <div className="panel-inner-core">
               <div className="panel-header">
-            <div>
-              <h2>
-                <CheckCircle2
-                  size={16}
-                  style={{ verticalAlign: -2, marginRight: 6, color: 'var(--color-healthy)' }}
-                />
-                Recommended now
-              </h2>
-              <p className="panel-sub">Highest placement score (safety + normality + history)</p>
+                <div>
+                  <h2>
+                    <CheckCircle2
+                      size={16}
+                      style={{ verticalAlign: -2, marginRight: 6, color: 'var(--color-healthy)' }}
+                    />
+                    Recommended now
+                  </h2>
+                  <p className="panel-sub">Highest placement score (safety + normality + history)</p>
+                </div>
+              </div>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Node</th>
+                      <th>Score</th>
+                      <th>Fused %</th>
+                      <th>Risk %</th>
+                      <th>Components</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.recommended.map((r) => (
+                      <tr key={r.node_id}>
+                        <td>
+                          <Link to={`/app/nodes/${r.node_id}`}>{r.node_id}</Link>
+                        </td>
+                        <td>{r.score ?? '—'}</td>
+                        <td>{r.fused_risk ?? '—'}</td>
+                        <td>{r.risk_score}</td>
+                        <td style={{ fontSize: 12 }}>
+                          {r.components
+                            ? `S${r.components.safety} N${r.components.normality} H${r.components.history}`
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Node</th>
-                  <th>Score</th>
-                  <th>Fused %</th>
-                  <th>Risk %</th>
-                  <th>Components</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.recommended.map((r) => (
-                  <tr key={r.node_id}>
-                    <td>
-                      <Link to={`/app/nodes/${r.node_id}`}>{r.node_id}</Link>
-                    </td>
-                    <td>{r.score ?? '—'}</td>
-                    <td>{r.fused_risk ?? '—'}</td>
-                    <td>{r.risk_score}</td>
-                    <td style={{ fontSize: 12 }}>
-                      {r.components
-                        ? `S${r.components.safety} N${r.components.normality} H${r.components.history}`
-                        : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
         </Reveal>
-        
+
         <Reveal delay={0.2}>
-          <div className="panel">
+          <div className="panel" style={{ marginBottom: 0, height: '100%' }}>
             <div className="panel-inner-core">
               <div className="panel-header">
                 <div>
@@ -211,47 +211,48 @@ export function PlacementPage() {
                       size={16}
                       style={{ verticalAlign: -2, marginRight: 6, color: 'var(--color-critical)' }}
                     />
-                Machines to avoid
-              </h2>
-              <p className="panel-sub">Lowest placement score</p>
+                    Machines to avoid
+                  </h2>
+                  <p className="panel-sub">Lowest placement score</p>
+                </div>
+              </div>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Node</th>
+                      <th>Score</th>
+                      <th>Fused %</th>
+                      <th>Risk %</th>
+                      <th>Components</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.avoid.map((r) => (
+                      <tr key={r.node_id}>
+                        <td>
+                          <Link to={`/app/nodes/${r.node_id}`}>{r.node_id}</Link>
+                        </td>
+                        <td>{r.score ?? '—'}</td>
+                        <td>{r.fused_risk ?? '—'}</td>
+                        <td>{r.risk_score}</td>
+                        <td style={{ fontSize: 12 }}>
+                          {r.components
+                            ? `S${r.components.safety} N${r.components.normality} H${r.components.history}`
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Node</th>
-                  <th>Score</th>
-                  <th>Fused %</th>
-                  <th>Risk %</th>
-                  <th>Components</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.avoid.map((r) => (
-                  <tr key={r.node_id}>
-                    <td>
-                      <Link to={`/app/nodes/${r.node_id}`}>{r.node_id}</Link>
-                    </td>
-                    <td>{r.score ?? '—'}</td>
-                    <td>{r.fused_risk ?? '—'}</td>
-                    <td>{r.risk_score}</td>
-                    <td style={{ fontSize: 12 }}>
-                      {r.components
-                        ? `S${r.components.safety} N${r.components.normality} H${r.components.history}`
-                        : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
         </Reveal>
       </div>
     </div>
   )
 }
+
 
 

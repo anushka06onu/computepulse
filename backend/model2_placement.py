@@ -9,7 +9,7 @@ IMPORTANT HONESTY NOTE (read this before presenting to judges):
 The real Alibaba trace does NOT contain a label saying "this
 placement was optimal." So instead of pretending to train a
 classifier on a label that doesn't exist, we do the technically
-correct thing: we use Model 1's real, validated failure-risk
+correct thing: we use the failure risk model's real, validated
 predictions, aggregate them per physical machine, and recommend
 placing new jobs on the machines with the lowest historical risk.
 
@@ -17,7 +17,7 @@ This is a legitimate, defensible technique - it's literally how
 many real risk-aware schedulers work (score candidates, pick the
 best). If a judge asks "how is this trained?", the honest answer
 is: "It's not a separately trained classifier - it's a decision
-layer built on Model 1's real, validated predictions." That is a
+layer built on the failure risk model's real, validated predictions." That is a
 BETTER answer than claiming a fake ground-truth label exists.
 
 HOW TO RUN:
@@ -25,7 +25,7 @@ HOW TO RUN:
 
 REQUIRES:
     data/cluster_data_real.csv
-    models/model1.pkl
+    models/failure_risk_model.pkl
 
 CREATES:
     results/node_risk_scores.csv   <- every real machine, ranked by risk
@@ -36,7 +36,7 @@ import pandas as pd
 import pickle
 
 DATA_FILE = "data/cluster_data_real.csv"
-MODEL_FILE = "models/model1.pkl"
+MODEL_FILE = "models/failure_risk_model.pkl"
 OUTPUT_FILE = "results/node_risk_scores.csv"
 
 FEATURES = [
@@ -59,13 +59,13 @@ def recommend_avoid_nodes(node_scores, top_n=10):
 
 
 def main():
-    print("Loading real data and trained Model 1...")
+    print("Loading real data and trained failure risk model...")
     data = pd.read_csv(DATA_FILE)
 
     with open(MODEL_FILE, "rb") as f:
         model = pickle.load(f)
 
-    print(f"Scoring {len(data):,} real instances with Model 1...")
+    print(f"Scoring {len(data):,} real instances with the failure risk model...")
     data["risk_score"] = model.predict_proba(data[FEATURES])[:, 1] * 100
 
     print("Aggregating risk per real machine (node)...")
@@ -101,3 +101,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
