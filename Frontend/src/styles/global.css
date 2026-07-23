@@ -253,9 +253,14 @@ select:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: var(--space-5);
-  padding-bottom: var(--space-4);
+  margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) var(--space-5);
+  padding: 16px var(--space-6);
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in oklab, var(--color-glass, var(--panel)) 92%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
 }
 
 .app-topbar-brand {
@@ -284,6 +289,10 @@ select:focus-visible {
   color: #fff;
   flex-shrink: 0;
   box-shadow: 0 2px 8px var(--accent-ring);
+}
+
+.app-topbar-brand-name {
+  color: #ffffff !important;
 }
 
 .app-topbar-brand-name span {
@@ -1579,6 +1588,10 @@ tbody tr:hover {
   color: var(--l-accent, var(--color-accent));
 }
 
+.shift-icon-mobile {
+  display: none !important;
+}
+
 .shift-divider span,
 .shift-divider svg {
   width: 44px;
@@ -1842,14 +1855,8 @@ tbody tr:hover {
   }
 
   .app-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 40;
-    margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) var(--space-5);
+    margin: calc(var(--space-4) * -1) calc(var(--space-4) * -1) var(--space-5);
     padding: 12px 20px;
-    background: color-mix(in oklab, var(--color-glass, var(--panel)) 92%, transparent);
-    backdrop-filter: blur(14px) saturate(1.2);
-    border-bottom: 1px solid var(--border);
   }
 
   .nav-close {
@@ -1935,8 +1942,14 @@ tbody tr:hover {
   }
 
   .shift-divider {
-    transform: rotate(90deg);
-    padding: 4px 0;
+    transform: none;
+    padding: 12px 0;
+  }
+  .shift-icon-desktop {
+    display: none !important;
+  }
+  .shift-icon-mobile {
+    display: block !important;
   }
 
   .module-row {
@@ -3788,4 +3801,31 @@ tbody tr:hover {
   background-size: 200% 100%;
   animation: fleetShimmer 1.2s ease-in-out infinite;
   border-radius: var(--radius-md, 12px);
+}
+
+@media (min-width: 1025px) {
+  .app-shell {
+    transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .app-shell.desktop-nav-collapsed {
+    grid-template-columns: 0 1fr;
+  }
+  .app-shell.desktop-nav-collapsed .app-nav {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .app-nav {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  }
+  .nav-toggle {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    flex-shrink: 0;
+    margin-right: 8px;
+  }
 }

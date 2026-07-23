@@ -4,6 +4,7 @@ import { motion, useInView } from 'framer-motion'
 import {
   Activity,
   ArrowRight,
+  ArrowDown,
   Cpu,
   Play,
   ShieldCheck,
@@ -183,7 +184,8 @@ export function LandingPage() {
               aria-hidden
               variants={staggerItem}
             >
-              <ArrowRight size={18} strokeWidth={2.25} />
+              <ArrowRight size={18} strokeWidth={2.25} className="shift-icon-desktop" />
+              <ArrowDown size={18} strokeWidth={2.25} className="shift-icon-mobile" />
             </motion.div>
             <motion.div
               className="shift-col shift-col-next"
@@ -291,13 +293,14 @@ export function LandingPage() {
             end={88}
             decimals={0}
             suffix="%"
-            label="Accuracy vs 53% standard method"
+            label="Highly Accurate (vs 53% standard)"
           />
-          <ProofStat end={0.924} decimals={3} label="Prediction Confidence on real data" />
+          <ProofStat end={92} decimals={0} suffix="%" label="AI Confidence Score" />
           <ProofStat
-            end={0.902}
-            decimals={3}
-            label="Placement risk vs observed failures"
+            end={90}
+            decimals={0}
+            suffix="%"
+            label="Real-World Accuracy"
           />
         </motion.div>
       </section>

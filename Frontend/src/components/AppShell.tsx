@@ -52,6 +52,7 @@ export function AppShell() {
   const [showThresh, setShowThresh] = useState(false)
   const [warnCount, setWarnCount] = useState(0)
   const [navOpen, setNavOpen] = useState(false)
+  const [desktopNavCollapsed, setDesktopNavCollapsed] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -93,7 +94,7 @@ export function AppShell() {
   }, [navOpen])
 
   return (
-    <div className={`app-shell${navOpen ? ' nav-open' : ''}`}>
+    <div className={`app-shell${navOpen ? ' nav-open' : ''}${desktopNavCollapsed ? ' desktop-nav-collapsed' : ''}`}>
       <button
         type="button"
         className="nav-backdrop"
@@ -200,7 +201,7 @@ export function AppShell() {
             >
               <RefreshCw size={15} />
             </motion.span>
-            {busy ? 'Refreshing…' : 'Refresh snapshot'}
+            {busy ? 'Loading…' : 'Load new scenario'}
           </button>
           <button
             className="btn btn-ghost"
@@ -234,7 +235,7 @@ export function AppShell() {
             </div>
           ) : null}
           <p className="nav-hint">
-            Press ⌘K to jump anywhere. Snapshot seed #{seed}.
+            Press ⌘K to jump anywhere. Scenario #{seed}.
           </p>
         </div>
       </aside>
@@ -248,14 +249,26 @@ export function AppShell() {
               aria-label="Open menu"
               aria-expanded={navOpen}
               aria-controls="app-nav"
-              onClick={() => setNavOpen(true)}
+              onClick={() => {
+                if (window.innerWidth <= 1024) {
+                  setNavOpen(true)
+                } else {
+                  setDesktopNavCollapsed(!desktopNavCollapsed)
+                }
+              }}
             >
-              <Menu size={18} />
+              <motion.div
+                animate={desktopNavCollapsed ? { rotate: 0 } : { rotate: 90 }}
+                transition={{ duration: 0.2 }}
+                style={{ display: 'flex' }}
+              >
+                <Menu size={18} />
+              </motion.div>
             </button>
             <button
               type="button"
               className="app-topbar-brand"
-              onClick={() => navigate('/')}
+              onClick={() => { window.location.href = '/' }}
               aria-label="ComputePulse home"
             >
               <span className="brand-mark" aria-hidden>
@@ -273,13 +286,9 @@ export function AppShell() {
               <span className="meta-pill meta-pill-hide-sm">
                 Alibaba GPU trace · 2020
               </span>
-              <span className="meta-pill">Seed {seed}</span>
             </div>
           </div>
           <div className="app-topbar-actions">
-            <span className="topbar-seed" title={`Snapshot seed ${seed}`}>
-              #{seed}
-            </span>
             <button
               className="btn btn-primary btn-sm"
               id="run-demo-btn"
