@@ -15,15 +15,20 @@ import {
   Wallet,
   X,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useApp } from '../context/AppContext'
 import { ReadinessBanner } from './ReadinessBanner'
-import { CommandPalette } from './CommandPalette'
-import { OnboardingTour } from './OnboardingTour'
 import { pageVariants } from '../motion/presets'
 import { ThemeToggle } from './ThemeToggle'
 import { api } from '../api/client'
+
+const CommandPalette = lazy(() =>
+  import('./CommandPalette').then((m) => ({ default: m.CommandPalette })),
+)
+const OnboardingTour = lazy(() =>
+  import('./OnboardingTour').then((m) => ({ default: m.OnboardingTour })),
+)
 
 const links = [
   { to: '/app/fleet', label: 'Fleet Overview', id: 'nav-fleet', icon: LayoutDashboard },
@@ -57,6 +62,8 @@ export function AppShell() {
 
   useEffect(() => {
     void reloadHealth()
+    // Warm the default dashboard chunk while shell paints.
+    void import('../pages/FleetPage')
   }, [reloadHealth])
 
   useEffect(() => {
@@ -319,9 +326,12 @@ export function AppShell() {
           </motion.div>
         </AnimatePresence>
       </main>
-      <CommandPalette />
-      {!tourDone ? <OnboardingTour /> : null}
+      <Suspense fallback={null}>
+        <CommandPalette />
+        {!tourDone ? <OnboardingTour /> : null}
+      </Suspense>
     </div>
   )
 }
+
 

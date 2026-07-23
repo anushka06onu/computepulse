@@ -1,13 +1,9 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppProvider } from './context/AppContext'
+import { LandingPage } from './pages/LandingPage'
+import { AppShell } from './components/AppShell'
 
-const LandingPage = lazy(() =>
-  import('./pages/LandingPage').then((m) => ({ default: m.LandingPage })),
-)
-const AppShell = lazy(() =>
-  import('./components/AppShell').then((m) => ({ default: m.AppShell })),
-)
 const FleetPage = lazy(() =>
   import('./pages/FleetPage').then((m) => ({ default: m.FleetPage })),
 )
@@ -37,7 +33,11 @@ const WarningsPage = lazy(() =>
 )
 
 function RouteFallback() {
-  return <div className="route-fallback" aria-busy="true" aria-label="Loading" />
+  return (
+    <div className="route-fallback" aria-busy="true" aria-label="Loading">
+      <div className="route-fallback-pulse" />
+    </div>
+  )
 }
 
 function Lazy({ children }: { children: ReactNode }) {
@@ -49,22 +49,8 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <Routes>
-          <Route
-            path="/"
-            element={
-              <Lazy>
-                <LandingPage />
-              </Lazy>
-            }
-          />
-          <Route
-            path="/app"
-            element={
-              <Lazy>
-                <AppShell />
-              </Lazy>
-            }
-          >
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/app" element={<AppShell />}>
             <Route index element={<Navigate to="fleet" replace />} />
             <Route
               path="fleet"
