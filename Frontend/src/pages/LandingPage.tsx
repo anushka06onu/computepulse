@@ -138,18 +138,22 @@ export function LandingPage() {
 
       <section className="landing-hero">
         <header className="landing-nav">
-          <div className="brand">
+          <Link to="/" className="brand landing-nav-brand" aria-label="ComputePulse home">
             <div className="brand-mark">
               <Activity size={15} strokeWidth={2.5} />
             </div>
             <span className="brand-word">
               Compute<span>Pulse</span>
             </span>
-          </div>
+          </Link>
           <div className="landing-nav-actions">
             <ThemeToggle />
-            <Link to="/app/fleet" className="landing-nav-link">
+            <Link to="/app/fleet" className="btn btn-outline-light btn-sm landing-nav-btn">
               Dashboard
+            </Link>
+            <Link to="/app/demo" className="btn btn-on-dark btn-sm landing-nav-btn">
+              <Play size={14} />
+              Run Demo
             </Link>
           </div>
         </header>
@@ -267,11 +271,11 @@ export function LandingPage() {
       <section className="landing-section landscape-section">
         <motion.div {...fade} className="section-intro">
           <p className="section-label">Fleet landscape</p>
-          <h2 className="section-title">Real fleet risk landscape</h2>
+          <h2 className="section-title">Where should the next job land?</h2>
           <p className="section-lead">
-            Interactive 3D view of machine risk versus CPU and GPU pressure —
-            the same signal operators use to decide where the next job should
-            land.
+            Each tower is a GPU machine. Taller and redder means higher failure
+            risk. Floor position is CPU × GPU pressure — place work on short
+            teal towers, avoid the tall red ones.
           </p>
         </motion.div>
         <motion.div
@@ -613,6 +617,7 @@ function ProofStat({
     </div>
   )
 }
+
 
 
 

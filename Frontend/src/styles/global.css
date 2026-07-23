@@ -1257,18 +1257,50 @@ tbody tr:hover {
 }
 
 .landing-nav {
-  position: relative;
-  z-index: 2;
+  position: sticky;
+  top: 0;
+  z-index: 30;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: clamp(18px, 3vw, 28px) clamp(24px, 6vw, 80px);
+  gap: 12px;
+  padding: clamp(14px, 2.4vw, 20px) clamp(24px, 6vw, 80px);
+  background: color-mix(in oklab, var(--l-hero-base, #0c1416) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  border-bottom: 1px solid color-mix(in oklab, var(--l-ink, #fff) 10%, transparent);
 }
 
 .landing-nav-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.landing-nav-brand {
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.landing-nav-brand:hover {
+  text-decoration: none;
+  opacity: 1;
+}
+
+.landing-nav .landing-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.landing-nav .landing-nav-btn.btn-sm {
+  padding: 8px 14px;
+  font-size: 0.84rem;
+  font-weight: 650;
+  border-radius: 10px;
 }
 
 .theme-toggle-btn {
@@ -2350,17 +2382,27 @@ tbody tr:hover {
   }
 
   .landing-nav {
-    padding: var(--space-4);
-    gap: 12px;
-  }
-
-  .landing-nav-actions {
+    padding: 12px var(--space-4);
     gap: 8px;
   }
 
-  .landing-nav .btn-sm {
-    padding: 6px 10px;
-    font-size: 0.8rem;
+  .landing-nav-actions {
+    gap: 6px;
+  }
+
+  .landing-nav .landing-nav-btn.btn-sm {
+    padding: 7px 11px;
+    font-size: 0.78rem;
+  }
+
+  .landing-nav .landing-nav-btn .lucide,
+  .landing-nav .landing-nav-btn svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .landing-nav .brand-word {
+    font-size: 0.9rem;
   }
 
   .hero-content {
@@ -2429,22 +2471,26 @@ tbody tr:hover {
     justify-content: flex-start;
   }
 
-  .fleet-3d-axis-overlay {
+  .fleet-3d-legend {
+    bottom: 44px;
+    left: 10px;
+    min-width: 0;
+    padding: 8px 10px;
+  }
+
+  .fleet-3d-readout {
     display: none;
   }
 
-  .fleet-3d-pill {
-    font-size: 0.6rem;
+  .fleet-3d-plaque {
     left: 10px;
     top: 10px;
+    max-width: calc(100% - 20px);
   }
 
-  .fleet-3d-scale {
-    right: 10px;
-  }
-
-  .fleet-3d-scale-bar {
-    height: 88px;
+  .fleet-3d-hint {
+    font-size: 0.62rem;
+    padding: 6px 10px;
   }
 
   .map-legend-bar {
@@ -3448,12 +3494,13 @@ tbody tr:hover {
   --l-panel: color-mix(in oklab, var(--color-surface) 70%, transparent);
 }
 
-.landing-nav .brand {
-  color: #fff;
+.landing-nav .brand,
+.landing-nav .landing-nav-brand {
+  color: var(--l-ink, var(--color-ink));
 }
 
 .landing-nav .brand-word {
-  color: #fff;
+  color: var(--l-ink, var(--color-ink));
 }
 
 .landing-nav .brand-word > span,
@@ -3474,14 +3521,40 @@ tbody tr:hover {
 }
 
 .landing .theme-toggle-btn {
+  display: inline-flex;
+  visibility: visible;
+  opacity: 1;
   background: var(--l-glass);
   border-color: var(--l-glass-border);
   color: var(--l-ink);
   backdrop-filter: blur(10px);
   box-shadow: none;
+  flex-shrink: 0;
 }
 
 .landing .theme-toggle-btn:hover {
+  background: color-mix(in oklab, var(--l-ink) 10%, transparent);
+  border-color: var(--l-outline-hover);
+}
+
+.landing .landing-nav .btn-on-dark {
+  background: var(--l-cta-bg);
+  color: var(--l-cta-ink);
+  box-shadow: var(--l-cta-shadow);
+  border: 1px solid transparent;
+}
+
+.landing .landing-nav .btn-on-dark:hover {
+  background: var(--l-cta-bg-hover);
+}
+
+.landing .landing-nav .btn-outline-light {
+  color: var(--l-ink);
+  border: 1.5px solid var(--l-outline);
+  background: color-mix(in oklab, var(--l-ink) 4%, transparent);
+}
+
+.landing .landing-nav .btn-outline-light:hover {
   background: color-mix(in oklab, var(--l-ink) 10%, transparent);
   border-color: var(--l-outline-hover);
 }
@@ -3763,26 +3836,30 @@ tbody tr:hover {
 
 .landscape-stage {
   position: relative;
-  border-radius: var(--radius-lg);
+  border-radius: 18px;
   overflow: hidden;
-  border: 1px solid color-mix(in oklab, var(--l-ink, var(--color-ink)) 12%, transparent);
-  background: #0b1618;
-  min-height: 420px;
-  isolation: isolate;
+  border: 1px solid color-mix(in oklab, var(--l-ink, var(--color-ink)) 14%, transparent);
+  background: #080d10;
+  min-height: 440px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, #fff 6%, transparent),
+    0 24px 60px color-mix(in oklab, #000 28%, transparent);
 }
 
 .fleet-3d {
   display: grid;
   gap: 0;
-  background: #0b1618;
+  background: #050a0d;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .fleet-3d-canvas {
   position: relative;
-  height: min(56vh, 520px);
-  min-height: 380px;
+  height: min(60vh, 560px);
+  min-height: 420px;
   width: 100%;
-  background: #0b1618;
+  background: #050a0d;
 }
 
 .fleet-3d-canvas>div {
@@ -3794,7 +3871,7 @@ tbody tr:hover {
   width: 100% !important;
   height: 100% !important;
   display: block;
-  background: #0b1618;
+  background: #050a0d;
 }
 
 .fleet-3d-chrome {
@@ -3804,54 +3881,154 @@ tbody tr:hover {
   z-index: 2;
 }
 
-.fleet-3d-pill {
+.fleet-3d-plaque {
   position: absolute;
-  left: 16px;
-  top: 14px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: color-mix(in oklab, #fff 78%, transparent);
-  background: rgba(4, 16, 18, 0.88);
-  border: 1px solid color-mix(in oklab, #5eead4 28%, transparent);
-}
-
-.fleet-3d-axis-overlay {
-  position: absolute;
-  left: 16px;
-  bottom: 16px;
+  left: 18px;
+  top: 16px;
   display: flex;
-  gap: 12px;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: color-mix(in oklab, #fff 48%, transparent);
-  pointer-events: none;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 16px;
+  border-radius: 14px;
+  background: rgba(8, 16, 20, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in oklab, #9fb8b3 14%, transparent);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  max-width: min(260px, calc(100% - 36px));
 }
 
-.fleet-3d-hud {
-  position: absolute;
-  left: 16px;
-  bottom: 40px;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(4, 16, 18, 0.92);
-  border: 1px solid color-mix(in oklab, #fff 12%, transparent);
-  color: color-mix(in oklab, #fff 78%, transparent);
-  font-size: 0.78rem;
-  pointer-events: none;
-}
-
-.fleet-3d-hud strong {
-  color: #fff;
+.fleet-3d-plaque strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.84rem;
   font-weight: 650;
-  margin-right: 4px;
+  letter-spacing: -0.01em;
+  color: #eef6f4;
+  line-height: 1.2;
+}
+
+.fleet-3d-plaque em {
+  display: block;
+  margin-top: 3px;
+  font-style: normal;
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+  color: color-mix(in oklab, #fff 48%, transparent);
+  text-transform: none;
+}
+
+.fleet-3d-live {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5eead4;
+  box-shadow: 0 0 0 3px color-mix(in oklab, #5eead4 20%, transparent);
+  flex-shrink: 0;
+  animation: fleetLivePulse 2s ease-in-out infinite;
+}
+
+@keyframes fleetLivePulse {
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in oklab, #5eead4 20%, transparent); }
+  50% { box-shadow: 0 0 0 6px color-mix(in oklab, #5eead4 8%, transparent); }
+}
+
+.fleet-3d-legend {
+  position: absolute;
+  left: 18px;
+  bottom: 56px;
+  display: grid;
+  gap: 7px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(8, 16, 20, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in oklab, #fff 8%, transparent);
+  min-width: 175px;
+}
+
+.fleet-3d-legend-title {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, #fff 38%, transparent);
+  margin-bottom: 2px;
+}
+
+.fleet-3d-legend-row {
+  display: grid;
+  grid-template-columns: 11px 1fr auto;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.64rem;
+  letter-spacing: 0.02em;
+  color: color-mix(in oklab, #fff 72%, transparent);
+}
+
+.fleet-3d-legend-row b {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #eef6f4;
+  font-variant-numeric: tabular-nums;
+}
+
+.fleet-3d-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.fleet-3d-dot-ok {
+  background: #34d399;
+  box-shadow: 0 0 6px color-mix(in oklab, #34d399 35%, transparent);
+}
+
+.fleet-3d-dot-watch {
+  background: #f59e0b;
+  box-shadow: 0 0 6px color-mix(in oklab, #f59e0b 35%, transparent);
+}
+
+.fleet-3d-dot-crit {
+  background: #ef4444;
+  box-shadow: 0 0 6px color-mix(in oklab, #ef4444 35%, transparent);
+}
+
+.fleet-3d-readout {
+  position: absolute;
+  right: 18px;
+  bottom: 56px;
+  width: min(200px, calc(100% - 220px));
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(8, 16, 20, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in oklab, #fff 8%, transparent);
+  display: grid;
+  gap: 8px;
+}
+
+.fleet-3d-readout-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.66rem;
+  line-height: 1.4;
+  color: color-mix(in oklab, #fff 68%, transparent);
+}
+
+.fleet-3d-readout-icon {
+  font-size: 0.78rem;
+  color: #5eead4;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.fleet-3d-readout strong {
+  color: #e8f4f3;
+  font-weight: 650;
 }
 
 .fleet-3d-hint {
@@ -3860,38 +4037,40 @@ tbody tr:hover {
   bottom: 16px;
   transform: translateX(-50%);
   z-index: 3;
-  padding: 6px 12px;
+  padding: 8px 18px;
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   letter-spacing: 0.04em;
-  color: color-mix(in oklab, #fff 70%, transparent);
-  background: rgba(4, 16, 18, 0.82);
-  border: 1px solid color-mix(in oklab, #fff 12%, transparent);
+  color: color-mix(in oklab, #fff 72%, transparent);
+  background: rgba(8, 16, 20, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in oklab, #fff 8%, transparent);
   pointer-events: none;
   white-space: nowrap;
 }
 
 .fleet-3d-info {
   position: absolute;
-  top: 14px;
-  right: 16px;
+  top: 18px;
+  right: 18px;
   z-index: 4;
-  width: min(240px, calc(100% - 32px));
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(6, 18, 20, 0.94);
-  border: 1px solid color-mix(in oklab, #5eead4 28%, transparent);
+  width: min(260px, calc(100% - 36px));
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: rgba(8, 16, 20, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid color-mix(in oklab, #9fb8b3 16%, transparent);
   color: #e8f4f3;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
   pointer-events: auto;
 }
 
 .fleet-3d-info-critical {
-  border-color: color-mix(in oklab, #f87171 45%, transparent);
+  border-color: color-mix(in oklab, #ef4444 45%, transparent);
 }
 
 .fleet-3d-info-watch {
-  border-color: color-mix(in oklab, #fbbf24 40%, transparent);
+  border-color: color-mix(in oklab, #f59e0b 40%, transparent);
 }
 
 .fleet-3d-info-healthy {
@@ -3903,22 +4082,29 @@ tbody tr:hover {
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .fleet-3d-info-kicker {
   display: block;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: color-mix(in oklab, #fff 48%, transparent);
-  margin-bottom: 2px;
+  color: color-mix(in oklab, #fff 46%, transparent);
+  margin-bottom: 3px;
+}
+
+.fleet-3d-info-verdict {
+  margin: 0 0 12px;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: color-mix(in oklab, #fff 72%, transparent);
 }
 
 .fleet-3d-info-top strong {
   display: block;
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: #fff;
@@ -3929,15 +4115,15 @@ tbody tr:hover {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  border: 1px solid color-mix(in oklab, #fff 14%, transparent);
-  background: rgba(255, 255, 255, 0.04);
-  color: color-mix(in oklab, #fff 80%, transparent);
+  border: 1px solid color-mix(in oklab, #fff 12%, transparent);
+  background: rgba(255, 255, 255, 0.03);
+  color: color-mix(in oklab, #fff 78%, transparent);
   cursor: pointer;
   line-height: 1;
 }
 
 .fleet-3d-info-close:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
 }
 
@@ -3950,24 +4136,61 @@ tbody tr:hover {
 .fleet-3d-info-grid div {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
+  gap: 3px;
+  padding: 10px 11px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid color-mix(in oklab, #fff 5%, transparent);
 }
 
 .fleet-3d-info-grid span {
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in oklab, #fff 45%, transparent);
+  color: color-mix(in oklab, #fff 40%, transparent);
 }
 
 .fleet-3d-info-grid em {
   font-style: normal;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1rem;
+}
+
+.fleet-3d-info-meter {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.fleet-3d-info-meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.fleet-3d-info-critical .fleet-3d-info-meter-fill {
+  background: linear-gradient(90deg, #f97316, #ef4444);
+}
+
+.fleet-3d-info-watch .fleet-3d-info-meter-fill {
+  background: linear-gradient(90deg, #f59e0b, #f97316);
+}
+
+.fleet-3d-info-healthy .fleet-3d-info-meter-fill {
+  background: linear-gradient(90deg, #34d399, #2dd4bf);
+}
+
+.fleet-3d-info-meter-label {
+  position: absolute;
+  right: 0;
+  top: -18px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.7rem;
   color: #fff;
 }
 
@@ -3984,78 +4207,25 @@ tbody tr:hover {
 }
 
 .fleet-3d-info-hint {
-  margin: 10px 0 0;
-  font-size: 0.68rem;
-  color: color-mix(in oklab, #fff 42%, transparent);
-}
-
-.fleet-3d-axis-label {
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: color-mix(in oklab, #fff 55%, transparent);
-  white-space: nowrap;
-}
-
-.fleet-3d-scale {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  font-size: 0.65rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: color-mix(in oklab, #fff 55%, transparent);
-  pointer-events: none;
-}
-
-.fleet-3d-scale-bar {
-  width: 8px;
-  height: 120px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #c44b3c 0%, #2a9d8f 100%);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, #fff 18%, transparent);
-}
-
-.fleet-3d-scale em {
-  font-style: normal;
-  font-weight: 650;
-  color: color-mix(in oklab, #fff 72%, transparent);
-}
-
-.fleet-3d-meta {
-  padding: 14px 18px 16px;
-  border-top: 1px solid color-mix(in oklab, #fff 10%, transparent);
-  background: color-mix(in oklab, #0b1214 88%, transparent);
-}
-
-.fleet-3d-meta p {
-  margin: 0;
-  font-size: 0.92rem;
-  color: color-mix(in oklab, #fff 72%, transparent);
-  line-height: 1.45;
-}
-
-.fleet-3d-meta strong {
-  color: #fff;
-  font-weight: 650;
+  margin: 11px 0 0;
+  font-size: 0.66rem;
+  color: color-mix(in oklab, #fff 40%, transparent);
 }
 
 .fleet-3d-skeleton,
 .fleet-3d-fallback {
-  min-height: 380px;
+  min-height: 400px;
   display: grid;
   place-items: center;
   color: color-mix(in oklab, #fff 55%, transparent);
   padding: 24px;
   text-align: center;
+  border-radius: 16px;
+  background: #050a0d;
 }
 
 .fleet-3d-skeleton {
-  background: linear-gradient(110deg, #152022 25%, #1c2c2f 40%, #152022 55%);
+  background: linear-gradient(110deg, #0a1418 25%, #122228 40%, #0a1418 55%);
   background-size: 200% 100%;
   animation: fleetShimmer 1.4s ease-in-out infinite;
 }
@@ -4370,6 +4540,11 @@ tbody tr:hover {
 
   .app-nav {
     width: min(100vw - 48px, 300px);
+  }
+
+  .landing-nav .landing-nav-btn span,
+  .landing-nav .landing-nav-btn {
+    font-size: 0.74rem;
   }
 }
 
