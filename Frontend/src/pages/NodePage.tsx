@@ -88,6 +88,34 @@ export function NodePage() {
     return ids.filter((id) => String(id).includes(query.trim())).slice(0, 200)
   }, [ids, query])
 
+  useEffect(() => {
+    if (nodeId) setQuery(String(nodeId))
+  }, [nodeId])
+
+  const goToNode = (raw: string) => {
+    const trimmed = raw.trim()
+    if (!trimmed || !ids.length) return
+
+    const exact = Number(trimmed)
+    if (Number.isFinite(exact) && ids.includes(exact)) {
+      navigate(`/app/nodes/${exact}`)
+      return
+    }
+
+    const matches = ids.filter((id) => String(id).includes(trimmed))
+    if (matches.length === 1) {
+      navigate(`/app/nodes/${matches[0]}`)
+      return
+    }
+    if (matches.length > 1) {
+      const preferred =
+        matches.find((id) => String(id) === trimmed) ??
+        matches.find((id) => String(id).startsWith(trimmed)) ??
+        matches[0]
+      navigate(`/app/nodes/${preferred}`)
+    }
+  }
+
   const shapData = useMemo(() => {
     if (!data) return []
     return [...data.shap].sort((a, b) => a.impact - b.impact)
@@ -122,7 +150,15 @@ export function NodePage() {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Type an ID to filter…"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      goToNode(query)
+                    }
+                  }}
+                  placeholder="Type an ID, then press Enter…"
+                  inputMode="numeric"
+                  aria-label="Search node ID and press Enter"
                 />
               </div>
               <div className="field" style={{ marginBottom: 0 }}>
@@ -489,6 +525,7 @@ function TimelineTooltip({ active, payload }: TimelineTooltipProps) {
     </div>
   )
 }
+
 
 
 
