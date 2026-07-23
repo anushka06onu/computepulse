@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import pickle
 from pathlib import Path
@@ -44,7 +43,7 @@ def main() -> None:
     X, y = data[FEATURES], data["will_fail"]
     _, X_te, _, y_te = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
-    model_path = ROOT / "models/model1.pkl"
+    model_path = ROOT / "models/failure_risk_model.pkl"
     with model_path.open("rb") as f:
         model = pickle.load(f)
 
@@ -66,7 +65,6 @@ def main() -> None:
     top_nodes = set(node.index[:nk])
     node_top5_recall = len(top_nodes & failed_nodes) / max(1, len(failed_nodes))
 
-    h = hashlib.sha256(model_path.read_bytes()).hexdigest()[:12]
     report = {
         "n_rows": int(len(data)),
         "n_test": int(len(X_te)),
@@ -77,7 +75,7 @@ def main() -> None:
         "top5_recall": top5_recall,
         "top10_recall": top10_recall,
         "node_top5_recall": float(node_top5_recall),
-        "model_version": f"model1@{h}",
+        "model_version": "Failure risk model",
         "feature_set": FEATURES,
         "trained_at": None,
     }
@@ -91,3 +89,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
