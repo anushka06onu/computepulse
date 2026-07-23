@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useApp } from '../context/AppContext'
+import { scaleIn } from '../motion/presets'
 
 const steps = [
   {
@@ -10,12 +12,12 @@ const steps = [
   },
   {
     title: 'Explain any node',
-    body: 'Open a machine to see live metrics and a real per-node SHAP explanation.',
+    body: 'Open a machine to see live metrics and a real per-node AI explanation.',
     path: '/app/nodes',
   },
   {
     title: 'Place the next job',
-    body: 'Rank machines to prefer or avoid based on Model 1 risk aggregated for placement.',
+    body: 'Rank machines to prefer or avoid based on failure risk scores used for placement.',
     path: '/app/placement',
   },
   {
@@ -32,8 +34,18 @@ export function OnboardingTour() {
   const current = steps[step]
 
   return (
-    <div className="tour-overlay">
-      <div className="tour-card">
+    <motion.div
+      className="tour-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      <motion.div
+        className="tour-card"
+        variants={scaleIn}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="tour-progress">
           {steps.map((_, i) => (
             <span key={i} className={i <= step ? 'on' : ''} />
@@ -51,8 +63,18 @@ export function OnboardingTour() {
         >
           Step {step + 1} of {steps.length}
         </p>
-        <h2>{current.title}</h2>
-        <p style={{ marginBottom: 20 }}>{current.body}</p>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.22 }}
+          >
+            <h2>{current.title}</h2>
+            <p style={{ marginBottom: 20 }}>{current.body}</p>
+          </motion.div>
+        </AnimatePresence>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button className="btn btn-ghost" onClick={() => completeTour()}>
             Skip
@@ -68,7 +90,8 @@ export function OnboardingTour() {
             {step >= steps.length - 1 ? 'Finish' : 'Next'}
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
+

@@ -24,7 +24,7 @@ def main() -> int:
     print("== artifact presence ==")
     for rel in [
         "data/cluster_data_real.csv",
-        "models/model1.pkl",
+        "models/failure_risk_model.pkl",
         "models/model_anomaly.pkl",
         "models/model_horizon.pkl",
         "results/eval_report.json",
@@ -52,7 +52,11 @@ def main() -> int:
     hs = store.health_score(snap)
     expected = round(100 - float(snap["fused_risk"].mean()), 1)
     check(hs["score"] == expected, f"health_score={hs['score']} == {expected}", errors)
-    check(store.model_version.startswith("model1@"), f"model_version={store.model_version}", errors)
+    check(
+        store.model_version == "Failure risk model",
+        f"model_version={store.model_version}",
+        errors,
+    )
 
     print("== explain template (no network required) ==")
     from api.services.explain import template_summary
@@ -114,3 +118,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

@@ -18,7 +18,6 @@ import { Search } from 'lucide-react'
 import { api, type ExplainResponse, type NodeDetail } from '../api/client'
 import { useApp } from '../context/AppContext'
 import { KPI } from '../components/KPI'
-import { StatusBadge } from '../components/StatusBadge'
 import { Reveal } from '../components/Reveal'
 import { ChartTooltip } from '../components/ChartTooltip'
 import { staggerContainer } from '../motion/presets'
@@ -89,6 +88,34 @@ export function NodePage() {
     return ids.filter((id) => String(id).includes(query.trim())).slice(0, 200)
   }, [ids, query])
 
+  useEffect(() => {
+    if (nodeId) setQuery(String(nodeId))
+  }, [nodeId])
+
+  const goToNode = (raw: string) => {
+    const trimmed = raw.trim()
+    if (!trimmed || !ids.length) return
+
+    const exact = Number(trimmed)
+    if (Number.isFinite(exact) && ids.includes(exact)) {
+      navigate(`/app/nodes/${exact}`)
+      return
+    }
+
+    const matches = ids.filter((id) => String(id).includes(trimmed))
+    if (matches.length === 1) {
+      navigate(`/app/nodes/${matches[0]}`)
+      return
+    }
+    if (matches.length > 1) {
+      const preferred =
+        matches.find((id) => String(id) === trimmed) ??
+        matches.find((id) => String(id).startsWith(trimmed)) ??
+        matches[0]
+      navigate(`/app/nodes/${preferred}`)
+    }
+  }
+
   const shapData = useMemo(() => {
     if (!data) return []
     return [...data.shap].sort((a, b) => a.impact - b.impact)
@@ -106,7 +133,7 @@ export function NodePage() {
           <h1>Node Explorer</h1>
           <p>
             Inspect a real machine: snapshot metrics, failure history, and local
-            SHAP explanation.
+            history, and local AI explanation.
           </p>
         </div>
       </div>
@@ -123,7 +150,15 @@ export function NodePage() {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Type an ID to filter…"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      goToNode(query)
+                    }
+                  }}
+                  placeholder="Type an ID, then press Enter…"
+                  inputMode="numeric"
+                  aria-label="Search node ID and press Enter"
                 />
               </div>
               <div className="field" style={{ marginBottom: 0 }}>
@@ -145,8 +180,8 @@ export function NodePage() {
 
         {data ? (
           <motion.div
-            className="kpi-grid"
-            style={{ marginBottom: 0, gridTemplateColumns: '1fr 1fr' }}
+            className="kpi-grid grid-2"
+            style={{ marginBottom: 0 }}
             variants={staggerContainer}
             initial="initial"
             animate="animate"
@@ -154,14 +189,26 @@ export function NodePage() {
             <KPI label="Risk" value={`${data.risk_score.toFixed(1)}%`} />
             <KPI label="Anomaly" value={data.anomaly_score.toFixed(2)} />
             <KPI label="Fused" value={`${data.fused_risk.toFixed(1)}%`} tone="watch" />
-            <div className="kpi">
-              <div className="kpi-top">
-                <div className="label">Health</div>
-              </div>
-              <div style={{ marginTop: 4 }}>
-                <StatusBadge health={data.health} />
-              </div>
-            </div>
+            <KPI
+              label="Health"
+              value={
+                <span className={`kpi-status ${data.health}`}>
+                  <span className="kpi-status-dot" aria-hidden />
+                  {data.health === 'critical'
+                    ? 'Critical'
+                    : data.health === 'watch'
+                      ? 'Watch'
+                      : 'Healthy'}
+                </span>
+              }
+              tone={
+                data.health === 'critical'
+                  ? 'critical'
+                  : data.health === 'watch'
+                    ? 'watch'
+                    : 'healthy'
+              }
+            />
             <KPI
               label="Fleet rank"
               value={`#${data.fleet_rank}`}
@@ -183,11 +230,9 @@ export function NodePage() {
             <div className="panel-inner-core">
               <div className="panel-header">
                 <div>
-                  <h2>AI brief</h2>
+                  <h2>System Summary</h2>
                   <p className="panel-sub">
-                    {brief.llm_used ? 'Groq rewrite' : 'Template'} ·{' '}
-                    {brief.embedding_used ? 'HF neighbors' : 'sklearn neighbors'}
-                    {data.model_version ? ` · ${data.model_version}` : ''}
+                    {data.model_version ? `Powered by AI Engine ${data.model_version}` : 'Automated Analysis'}
                   </p>
                 </div>
               </div>
@@ -201,16 +246,16 @@ export function NodePage() {
               </div>
               {brief.neighbors.length ? (
                 <p className="caption" style={{ marginBottom: 0 }}>
-                  Similar failed nodes:{' '}
+                  Similar machines failed recently:{' '}
                   {brief.neighbors
                     .map(
                       (n) =>
-                        `${n.node_id} (risk ${n.risk_score}%, fail ${(n.historical_failure_rate * 100).toFixed(0)}%)`,
+                        `Node ${n.node_id} (${(n.historical_failure_rate * 100).toFixed(0)}% failure history)`,
                     )
                     .join(' · ')}
                 </p>
               ) : null}
-              <p className="caption">{brief.caveat}</p>
+              {/* <p className="caption">{brief.caveat}</p> */}
             </div>
           </div>
         </Reveal>
@@ -219,7 +264,7 @@ export function NodePage() {
           <div className="panel-inner-core">
             <div className="panel-header">
               <div>
-                <h2>AI brief</h2>
+                <h2>System Summary</h2>
                 <p className="panel-sub">Loading grounded brief…</p>
               </div>
             </div>
@@ -266,7 +311,7 @@ export function NodePage() {
                   <div className="panel-header">
                     <div>
                       <h2>Why this risk?</h2>
-                      <p className="panel-sub">Local SHAP for this machine</p>
+                      <p className="panel-sub">Why the AI thinks this</p>
                     </div>
                   </div>
                   <div style={{ width: '100%', height: 320 }}>
@@ -297,7 +342,13 @@ export function NodePage() {
                         />
                         <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-elevated)' }} />
 
-                        <Bar dataKey="impact" radius={[0, 6, 6, 0]} isAnimationActive>
+                        <Bar
+                          dataKey="impact"
+                          radius={[0, 6, 6, 0]}
+                          isAnimationActive
+                          animationDuration={700}
+                          animationEasing="ease-out"
+                        >
                           {shapData.map((s) => (
                             <Cell
                               key={s.feature}
@@ -472,4 +523,7 @@ function TimelineTooltip({ active, payload }: TimelineTooltipProps) {
     </div>
   )
 }
+
+
+
 

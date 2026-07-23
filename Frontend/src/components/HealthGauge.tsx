@@ -105,12 +105,20 @@ export function HealthGauge({
           <div className="health-gauge-value" style={{ color }}>
             <CountUp end={clamped} decimals={1} />
           </div>
-          <div className="health-gauge-grade" data-grade={resolvedGrade}>
+          <motion.div
+            className="health-gauge-grade"
+            data-grade={resolvedGrade}
+            key={resolvedGrade}
+            initial={reduced ? false : { opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.28 }}
+          >
             {resolvedGrade}
-          </div>
+          </motion.div>
         </div>
       </div>
       <div className="health-gauge-label">{label}</div>
     </div>
   )
 }
+

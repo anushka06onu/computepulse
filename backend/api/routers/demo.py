@@ -12,6 +12,44 @@ router = APIRouter(prefix="/api/demo", tags=["demo"])
 # Cache by (seed, rank) so re-clicks never reshuffle or re-run SHAP.
 _SCENARIO_CACHE: dict[tuple[int, int], dict[str, Any]] = {}
 _MAX_DEMO_RANKS = 10
+_CANDIDATE_N = 5
+
+# Early-prediction cost model (labeled assumptions — same $2.50 base as Model 3).
+ASSUMED_COST_PER_GPU_HOUR = 2.50
+ASSUMED_JOB_GPU_HOURS = 24.0
+ASSUMED_INCIDENT_OVERHEAD_USD = 850.0
+
+
+def _early_prediction_savings(
+    fused_from: float, fused_to: float
+) -> dict[str, Any]:
+    """Expected $ avoided by moving the job before failure.
+
+    savings ≈ ΔP(fail) × (job compute cost + incident overhead)
+    """
+    p_from = max(0.0, min(1.0, fused_from / 100.0))
+    p_to = max(0.0, min(1.0, fused_to / 100.0))
+    delta_p = max(0.0, p_from - p_to)
+    compute_at_risk = ASSUMED_JOB_GPU_HOURS * ASSUMED_COST_PER_GPU_HOUR
+    at_risk_usd = compute_at_risk + ASSUMED_INCIDENT_OVERHEAD_USD
+    saved = round(delta_p * at_risk_usd, 1)
+    return {
+        "estimated_usd": saved,
+        "risk_reduction_pp": round(fused_from - fused_to, 1),
+        "probability_avoided": round(delta_p, 4),
+        "assumed_job_gpu_hours": ASSUMED_JOB_GPU_HOURS,
+        "assumed_cost_per_gpu_hour": ASSUMED_COST_PER_GPU_HOUR,
+        "assumed_incident_overhead_usd": ASSUMED_INCIDENT_OVERHEAD_USD,
+        "formula": (
+            "ΔP(fail) × (job GPU-hours × $/GPU-hour + incident overhead)"
+        ),
+        "caveat": (
+            f"Assumes a {ASSUMED_JOB_GPU_HOURS:.0f}h GPU job at "
+            f"${ASSUMED_COST_PER_GPU_HOUR:.2f}/GPU-hour plus "
+            f"${ASSUMED_INCIDENT_OVERHEAD_USD:.0f} incident overhead — "
+            "not Alibaba ground truth."
+        ),
+    }
 
 
 def _scenario_for_seed(use_seed: int, rank: int = 0) -> dict[str, Any]:
@@ -43,12 +81,14 @@ def _scenario_for_seed(use_seed: int, rank: int = 0) -> dict[str, Any]:
         for _, r in scored.iterrows()
     ]
     scored["placement_score"] = ps
-    # Never recommend moving onto the flagged node itself.
-    best = (
+    # Score every other node, then shortlist — recommend only after analysis.
+    ranked = (
         scored[scored["node_id"] != int(worst["node_id"])]
         .sort_values(["placement_score", "node_id"], ascending=[False, True])
-        .iloc[0]
+        .reset_index(drop=True)
     )
+    shortlist = ranked.head(_CANDIDATE_N)
+    best = shortlist.iloc[0]
 
     worst_id = int(worst["node_id"])
     best_id = int(best["node_id"])
@@ -66,6 +106,26 @@ def _scenario_for_seed(use_seed: int, rank: int = 0) -> dict[str, Any]:
         1,
     )
 
+    candidates: list[dict[str, Any]] = []
+    for i, (_, row) in enumerate(shortlist.iterrows()):
+        nid = int(row["node_id"])
+        comps = store.placement_components(
+            float(row["fused_risk"]),
+            float(row["anomaly_score"]),
+            float(fail_map.get(nid, 0.0)),
+        )
+        candidates.append(
+            {
+                "rank": i + 1,
+                "node_id": nid,
+                "placement_score": round(float(row["placement_score"]), 1),
+                "fused_risk": round(float(row["fused_risk"]), 1),
+                "risk_score": round(float(row["risk_score"]), 1),
+                "components": comps,
+                "selected": nid == best_id,
+            }
+        )
+
     hist = store.data[store.data["node_id"] == worst_id]
     fail_rate = float(hist["will_fail"].mean()) if len(hist) else 0.0
     with warnings.catch_warnings():
@@ -74,6 +134,7 @@ def _scenario_for_seed(use_seed: int, rank: int = 0) -> dict[str, Any]:
 
     health_before = round(100 - worst_fused, 1)
     health_after = round(100 - best_fused, 1)
+    savings = _early_prediction_savings(worst_fused, best_fused)
 
     afr = None
     if store.node_scores is not None:
@@ -86,10 +147,17 @@ def _scenario_for_seed(use_seed: int, rank: int = 0) -> dict[str, Any]:
     job_id = 1000 + worst_id
     steps = [
         "Scanning fleet\u2026",
-        f"Node {worst_id} flagged at {worst_fused}% fused risk",
+        f"Node {worst_id} flagged at {worst_fused}% risk score",
         "Top drivers: " + ", ".join(reasons),
-        f"Recommend moving Job {job_id} \u2192 Node {best_id} (score {best_score})",
-        f"Workload health {health_before} \u2192 {health_after}",
+        (
+            f"Scoring top {_CANDIDATE_N} placement candidates "
+            f"(safety 60% + normality 30% + history 10%)\u2026"
+        ),
+        f"Recommend Job {job_id} \u2192 Node {best_id} (score {best_score})",
+        (
+            f"Workload health {health_before} \u2192 {health_after} · "
+            f"est. ${savings['estimated_usd']:,.0f} avoided"
+        ),
     ]
 
     return {
@@ -115,6 +183,8 @@ def _scenario_for_seed(use_seed: int, rank: int = 0) -> dict[str, Any]:
             "health": health_after,
             "actual_failure_rate": afr,
         },
+        "candidates": candidates,
+        "cost_savings": savings,
         "health_before": health_before,
         "health_after": health_after,
         "placement_delta": round(best_score - worst_score, 2),
@@ -122,9 +192,10 @@ def _scenario_for_seed(use_seed: int, rank: int = 0) -> dict[str, Any]:
         "model_version": store.model_version,
         "caveat": (
             "Projected workload health after moving off the critical node onto the "
-            "recommended placement target. Uses fused risk (0.75 risk + 0.25 anomaly). "
+            "highest-scoring placement candidate (safety + normality + history). "
             f"Run Demo cycles critical rank {use_rank + 1}/{pool_n} for fleet seed {use_seed}. "
-            "Replay keeps this node; Run Demo advances to the next critical machine."
+            "Replay keeps this node; Run Demo advances to the next critical machine. "
+            + savings["caveat"]
         ),
         "steps": steps,
     }
@@ -149,8 +220,9 @@ def scenario(
 
     use_seed = store.refresh_seed if seed is None else seed
     cache_key = (use_seed, int(rank))
+    # Drop stale cache entries that predate candidates / cost_savings.
     cached = _SCENARIO_CACHE.get(cache_key)
-    if cached is not None:
+    if cached is not None and "candidates" in cached and "cost_savings" in cached:
         return cached
 
     result = _scenario_for_seed(use_seed, rank)
@@ -162,6 +234,7 @@ def scenario(
             "health_before": result["health_before"],
             "health_after": result["health_after"],
             "placement_delta": result["placement_delta"],
+            "estimated_savings_usd": result["cost_savings"]["estimated_usd"],
             "seed": use_seed,
             "rank": result["rank"],
         }

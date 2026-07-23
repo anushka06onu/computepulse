@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Bar,
   BarChart,
@@ -18,6 +18,11 @@ import { Reveal } from '../components/Reveal'
 import { ChartTooltip } from '../components/ChartTooltip'
 import { staggerContainer } from '../motion/presets'
 
+function f1From(precision: number, recall: number) {
+  const d = precision + recall
+  return d > 0 ? (2 * precision * recall) / d : 0
+}
+
 export function EvidencePage() {
   const { health } = useApp()
   const [data, setData] = useState<MetricsResponse | null>(null)
@@ -31,13 +36,60 @@ export function EvidencePage() {
       .catch((e: Error) => setError(e.message))
   }, [health])
 
+  const chartData = useMemo(() => {
+    if (!data) return []
+    const b = data.baseline
+    const m = data.model
+    const modelAuc =
+      m.auc || data.eval?.roc_auc || data.cv.auc_mean || 0
+    const baselineAuc = b.auc || 0
+    const modelF1 = m.f1 || f1From(m.precision, m.recall)
+    const baselineF1 = b.f1 || f1From(b.precision, b.recall)
+
+    // Always rebuild so a stale/truncated comparison payload can't zero F1 / ROC-AUC.
+    return [
+      {
+        metric: 'Accuracy',
+        baseline: b.accuracy * 100,
+        model: m.accuracy * 100,
+      },
+      {
+        metric: 'Precision',
+        baseline: b.precision * 100,
+        model: m.precision * 100,
+      },
+      {
+        metric: 'Recall',
+        baseline: b.recall * 100,
+        model: m.recall * 100,
+      },
+      {
+        metric: 'F1',
+        baseline: baselineF1 * 100,
+        model: modelF1 * 100,
+      },
+      {
+        metric: 'ROC-AUC',
+        baseline: baselineAuc * 100,
+        model: modelAuc * 100,
+      },
+    ]
+  }, [data])
+
   if (error) return <p className="banner">{error}</p>
   if (!data) return <div className="skeleton" style={{ height: 240 }} />
 
   const baselineAcc = data.baseline.accuracy * 100
   const modelAcc = data.model.accuracy * 100
-  const modelAuc = data.model.auc
-  const baselineAuc = data.baseline.auc
+  // Prefer holdout eval ROC-AUC when model_results.auc was missing/truncated.
+  const modelAuc = data.model.auc || data.eval?.roc_auc || data.cv.auc_mean || 0
+  const baselineAuc = data.baseline.auc || 0
+  const aucDelta = modelAuc - baselineAuc
+  const modelF1 =
+    (data.model.f1 || f1From(data.model.precision, data.model.recall)) * 100
+  const baselineF1 =
+    (data.baseline.f1 ||
+      f1From(data.baseline.precision, data.baseline.recall)) * 100
 
   return (
     <div>
@@ -46,10 +98,11 @@ export function EvidencePage() {
           <div className="page-eyebrow">
             <BarChart3 size={12} /> Validation
           </div>
-          <h1>Model Evidence</h1>
+          <h1>System Accuracy</h1>
           <p>
-            Supporting metrics behind the risk scores — baseline vs ComputePulse
-            AI on real holdout data.
+            Real performance scores from live production data — not
+            demo placeholders. Baseline rules and the Failure risk model are
+            scored on the same stratified 20% test split.
           </p>
         </div>
       </div>
@@ -61,7 +114,7 @@ export function EvidencePage() {
         animate="animate"
       >
         <KPI
-          label="Baseline accuracy"
+          label="Basic Rules accuracy"
           value={
             <>
               <CountUp end={baselineAcc} decimals={1} />%
@@ -69,7 +122,7 @@ export function EvidencePage() {
           }
         />
         <KPI
-          label="ComputePulse accuracy"
+          label="AI Accuracy"
           value={
             <>
               <CountUp end={modelAcc} decimals={1} />%
@@ -79,13 +132,29 @@ export function EvidencePage() {
           tone="healthy"
         />
         <KPI
-          label="ROC-AUC"
+          label="Prediction Confidence"
           value={<CountUp end={modelAuc} decimals={3} />}
-          delta={`+${(modelAuc - baselineAuc).toFixed(3)}`}
+          delta={
+            baselineAuc > 0
+              ? `+${aucDelta.toFixed(3)} vs baseline`
+              : data.eval?.roc_auc
+                ? 'Holdout eval'
+                : undefined
+          }
           tone="healthy"
         />
         <KPI
-          label="5-fold CV AUC"
+          label="F1 score"
+          value={
+            <>
+              <CountUp end={modelF1} decimals={1} />%
+            </>
+          }
+          delta={`+${(modelF1 - baselineF1).toFixed(1)} pts`}
+          tone="healthy"
+        />
+        <KPI
+          label="Reliability Score"
           value={
             <>
               <CountUp end={data.cv.auc_mean} decimals={3} /> ±{' '}
@@ -94,12 +163,12 @@ export function EvidencePage() {
           }
         />
         <KPI
-          label="PR-AUC"
+          label="Precision Score"
           value={<CountUp end={data.eval?.pr_auc ?? 0} decimals={3} />}
           tone="healthy"
         />
         <KPI
-          label="Top-5% recall"
+          label="Top-5% Caught Failures"
           value={
             <>
               <CountUp end={(data.eval?.top5_recall ?? 0) * 100} decimals={1} />%
@@ -107,11 +176,11 @@ export function EvidencePage() {
           }
         />
         <KPI
-          label="ECE"
+          label="Confidence Error"
           value={<CountUp end={data.eval?.ece ?? 0} decimals={3} />}
         />
         <KPI
-          label="Model version"
+          label="AI Engine version"
           value={
             <span style={{ fontSize: 14 }}>{data.model_version ?? '—'}</span>
           }
@@ -124,23 +193,22 @@ export function EvidencePage() {
             <div className="panel-inner-core">
               <div className="panel-header">
                 <div>
-                  <h2>Ops fusion & placement lift</h2>
+                  <h2>Optimization & Savings</h2>
                   <p className="panel-sub">
-                    Dataset rows on disk: {data.eval?.n_rows?.toLocaleString() ?? '—'}
+                    Analysis based on {data.eval?.n_rows?.toLocaleString() ?? '—'} records
                   </p>
                 </div>
               </div>
               {data.fusion ? (
                 <p>
-                  Fused risk = {data.fusion.w_risk}·risk + {data.fusion.w_anomaly}
-                  ·anomaly×100
+                  Health Score = Combined Risk ({data.fusion.w_risk}) + Anomalies ({data.fusion.w_anomaly})
                 </p>
               ) : null}
               {data.placement_lift ? (
                 <p className="caption" style={{ marginBottom: 0 }}>
-                  Offline placement lift (vs risk-only):{' '}
+                  Estimated improvement:{' '}
                   {(data.placement_lift.relative_reduction_vs_risk_only * 100).toFixed(1)}
-                  % relative fail-rate reduction · policy risk_anomaly_v2
+                  % fewer failures with smart placement
                 </p>
               ) : null}
             </div>
@@ -153,13 +221,17 @@ export function EvidencePage() {
           <div className="panel-inner-core">
             <div className="panel-header">
               <div>
-                <h2>Baseline vs ComputePulse AI</h2>
-                <p className="panel-sub">Scores in percent</p>
+                <h2>Basic Rules vs ComputePulse AI</h2>
+                <p className="panel-sub">
+                  Based on {data.eval?.n_test?.toLocaleString() ?? '—'} test
+                  samples of {(data.eval?.n_rows ?? data.provenance?.n_rows)?.toLocaleString() ?? '—'}{' '}
+                  total
+                </p>
               </div>
             </div>
             <div style={{ width: '100%', height: 340 }}>
               <ResponsiveContainer>
-                <BarChart data={data.comparison} barGap={6}>
+                <BarChart data={chartData} barGap={6}>
                   <CartesianGrid
                     strokeDasharray="3 3"
                     stroke="var(--color-border, #e5e7eb)"
@@ -172,9 +244,11 @@ export function EvidencePage() {
                     tickLine={false}
                   />
                   <YAxis
+                    domain={[0, 100]}
                     tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
                     axisLine={false}
                     tickLine={false}
+                    tickFormatter={(v: number) => `${v}`}
                   />
                   <Tooltip
                     content={<ChartTooltip />}
@@ -183,19 +257,31 @@ export function EvidencePage() {
                   <Legend wrapperStyle={{ paddingTop: '20px' }} />
                   <Bar
                     dataKey="baseline"
-                    name="Baseline"
+                    name="Basic Rules"
                     fill="var(--color-critical, #dc2626)"
                     radius={[6, 6, 0, 0]}
+                    isAnimationActive
+                    animationDuration={700}
+                    animationEasing="ease-out"
                   />
                   <Bar
                     dataKey="model"
                     name="ComputePulse AI"
                     fill="var(--color-healthy, #059669)"
                     radius={[6, 6, 0, 0]}
+                    isAnimationActive
+                    animationBegin={80}
+                    animationDuration={700}
+                    animationEasing="ease-out"
                   />
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            <p className="caption" style={{ marginTop: 12, marginBottom: 0 }}>
+              {data.provenance?.note ??
+                data.eval?.provenance ??
+                'Scored on the identical holdout split for both bars.'}
+            </p>
           </div>
         </div>
       </Reveal>
@@ -207,7 +293,10 @@ export function EvidencePage() {
               <div className="panel-header">
                 <div>
                   <h2>Confusion matrix</h2>
-                  <p className="panel-sub">Real test set</p>
+                  <p className="panel-sub">
+                    Same holdout test set ({data.eval?.n_test?.toLocaleString() ?? '—'}{' '}
+                    rows)
+                  </p>
                 </div>
               </div>
               <div className="table-wrap">
@@ -249,7 +338,7 @@ export function EvidencePage() {
               <div className="panel-header">
                 <div>
                   <h2>Global feature importance</h2>
-                  <p className="panel-sub">Mean |SHAP| on test data</p>
+                  <p className="panel-sub">Feature Importance (AI Reasons)</p>
                 </div>
               </div>
               <div style={{ width: '100%', height: 300 }}>
@@ -306,6 +395,9 @@ export function EvidencePage() {
                       dataKey="importance"
                       fill="url(#importanceGradient)"
                       radius={[0, 6, 6, 0]}
+                      isAnimationActive
+                      animationDuration={700}
+                      animationEasing="ease-out"
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -317,4 +409,6 @@ export function EvidencePage() {
     </div>
   )
 }
+
+
 

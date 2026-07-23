@@ -1,6 +1,8 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { motion } from 'framer-motion'
 import { StatusBadge } from './StatusBadge'
 import type { Health } from '../api/client'
+import { staggerContainer, staggerItem } from '../motion/presets'
 
 type Col<T> = {
   key: keyof T | string
@@ -8,6 +10,8 @@ type Col<T> = {
   render?: (row: T) => ReactNode
   sortValue?: (row: T) => string | number
 }
+
+const ROW_CAP = 40
 
 export function DataTable<T extends Record<string, unknown>>({
   rows,
@@ -61,12 +65,20 @@ export function DataTable<T extends Record<string, unknown>>({
             ))}
           </tr>
         </thead>
-        <tbody>
+        <motion.tbody
+          key={`${sortKey ?? 'default'}-${asc ? 'asc' : 'desc'}-${sorted.length}`}
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+        >
           {sorted.map((row, i) => {
             const health = row.health as Health | undefined
+            const animateRow = i < ROW_CAP
             return (
-              <tr
+              <motion.tr
                 key={i}
+                layout
+                variants={animateRow ? staggerItem : undefined}
                 className={
                   pulseCritical && health === 'critical' ? 'pulse-critical' : ''
                 }
@@ -80,10 +92,10 @@ export function DataTable<T extends Record<string, unknown>>({
                         : String(row[c.key as keyof T] ?? '')}
                   </td>
                 ))}
-              </tr>
+              </motion.tr>
             )
           })}
-        </tbody>
+        </motion.tbody>
       </table>
     </div>
   )

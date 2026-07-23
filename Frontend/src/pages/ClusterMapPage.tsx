@@ -1,12 +1,23 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Grid3x3 } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Box, Grid3x3, LayoutGrid } from 'lucide-react'
 import { api, type FleetNode, type FleetSnapshot, type Health } from '../api/client'
 import { useApp } from '../context/AppContext'
-import { fadeIn } from '../motion/presets'
+import { pressDown, staggerContainer, staggerItem, tooltipEnter } from '../motion/presets'
+
+const ClusterTopology3D = lazy(() =>
+  import('../components/three/ClusterTopology3D').then((m) => ({
+    default: m.ClusterTopology3D,
+  })),
+)
 
 type Filter = 'all' | Health
+type ViewMode = '3d' | '2d'
+
+const reduced =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 function cellColor(fused: number): string {
   if (fused >= 70) {
@@ -21,6 +32,16 @@ function cellColor(fused: number): string {
   return `color-mix(in oklab, var(--color-healthy) ${28 + Math.round(t * 47)}%, transparent)`
 }
 
+function canWebGL() {
+  if (typeof window === 'undefined') return false
+  try {
+    const c = document.createElement('canvas')
+    return !!(c.getContext('webgl') || c.getContext('experimental-webgl'))
+  } catch {
+    return false
+  }
+}
+
 export function ClusterMapPage() {
   const navigate = useNavigate()
   const { seed, critical, watch, health } = useApp()
@@ -31,6 +52,8 @@ export function ClusterMapPage() {
   const [hover, setHover] = useState<{ node: FleetNode; x: number; y: number } | null>(
     null,
   )
+  const webgl = useMemo(() => canWebGL(), [])
+  const [view, setView] = useState<ViewMode>(webgl ? '3d' : '2d')
 
   useEffect(() => {
     if (health && !health.ready) return
@@ -74,6 +97,22 @@ export function ClusterMapPage() {
             detail, click to inspect.
           </p>
         </div>
+        {webgl ? (
+          <div className="page-actions view-toggle">
+            <button
+              className={`chip${view === '3d' ? ' active' : ''}`}
+              onClick={() => setView('3d')}
+            >
+              <Box size={14} /> 3D
+            </button>
+            <button
+              className={`chip${view === '2d' ? ' active' : ''}`}
+              onClick={() => setView('2d')}
+            >
+              <LayoutGrid size={14} /> Classic 2D
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div className="filters">
@@ -85,13 +124,14 @@ export function ClusterMapPage() {
             ['healthy', 'Healthy'],
           ] as const
         ).map(([f, label]) => (
-          <button
+          <motion.button
             key={f}
             className={`chip${filter === f ? ' active' : ''}`}
             onClick={() => setFilter(f)}
+            whileTap={pressDown}
           >
             {label}
-          </button>
+          </motion.button>
         ))}
         <input
           className="map-search"
@@ -105,7 +145,7 @@ export function ClusterMapPage() {
         <div className="panel-inner-core">
           <div className="panel-header">
             <div>
-              <h2>Fleet heatmap</h2>
+              <h2>{view === '3d' ? 'Fleet topology' : 'Fleet heatmap'}</h2>
               <p className="panel-sub">
                 {cells.length.toLocaleString()} machines shown
               </p>
@@ -119,20 +159,30 @@ export function ClusterMapPage() {
 
           {!data ? (
             <div className="skeleton" style={{ height: 420 }} />
+          ) : view === '3d' ? (
+            <Suspense fallback={<div className="skeleton" style={{ height: 420 }} />}>
+              <ClusterTopology3D
+                nodes={cells}
+                reduced={reduced}
+                onSelect={(id) => navigate(`/app/nodes/${id}`)}
+              />
+            </Suspense>
           ) : (
             <motion.div
               className="cluster-grid"
-              variants={fadeIn}
+              variants={staggerContainer}
               initial="initial"
               animate="animate"
+              key={`${filter}-${query}`}
               onMouseLeave={() => setHover(null)}
             >
-              {cells.map((n) => (
-                <button
+              {cells.map((n, i) => (
+                <motion.button
                   key={n.node_id}
                   className={`cluster-cell ${n.health}`}
                   style={{ backgroundColor: cellColor(n.fused_risk) }}
                   aria-label={`Node ${n.node_id}, fused ${n.fused_risk.toFixed(0)}%, ${n.health}`}
+                  variants={i < 120 ? staggerItem : undefined}
                   onClick={() => navigate(`/app/nodes/${n.node_id}`)}
                   onMouseEnter={(e) =>
                     setHover({ node: n, x: e.clientX, y: e.clientY })
@@ -147,22 +197,27 @@ export function ClusterMapPage() {
         </div>
       </div>
 
-      {hover ? (
-        <div
-          className="map-tooltip"
-          style={{ left: hover.x + 14, top: hover.y + 14 }}
-        >
-          <strong>Node {hover.node.node_id}</strong>
-          <span>Fused {hover.node.fused_risk.toFixed(1)}%</span>
-          <span>Risk {hover.node.risk_score.toFixed(1)}%</span>
-          <span>Anomaly {hover.node.anomaly_score.toFixed(2)}</span>
-          <span className={`status ${hover.node.health}`}>
-            <span className="status-dot" />
-            {hover.node.health}
-          </span>
-        </div>
-      ) : null}
+      <AnimatePresence>
+        {hover && view === '2d' ? (
+          <motion.div
+            className="map-tooltip"
+            style={{ left: hover.x + 14, top: hover.y + 14 }}
+            variants={tooltipEnter}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+          >
+            <strong>Node {hover.node.node_id}</strong>
+            <span>Fused {hover.node.fused_risk.toFixed(1)}%</span>
+            <span>Risk {hover.node.risk_score.toFixed(1)}%</span>
+            <span>Anomaly {hover.node.anomaly_score.toFixed(2)}</span>
+            <span className={`status ${hover.node.health}`}>
+              <span className="status-dot" />
+              {hover.node.health}
+            </span>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   )
 }
-

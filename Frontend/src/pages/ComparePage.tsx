@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { GitCompare } from 'lucide-react'
 import { api, type NodeDetail } from '../api/client'
 import { useApp } from '../context/AppContext'
 import { StatusBadge } from '../components/StatusBadge'
 import { Reveal } from '../components/Reveal'
+import { pressDown, scaleIn, staggerContainer, staggerItem } from '../motion/presets'
 
 export function ComparePage() {
   const { seed, critical, watch, health } = useApp()
@@ -72,26 +74,52 @@ export function ComparePage() {
             <div className="panel-header">
               <div>
                 <h2>Select nodes</h2>
-                <p className="panel-sub">
-                  Selected: {selected.length ? selected.join(', ') : 'none'} (max 3)
-                </p>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}>
+                  <div className="field" style={{ margin: 0, flex: 1 }}>
+                    <input
+                      type="text"
+                      placeholder="Enter node IDs (e.g., 101, 102)"
+                      value={selected.join(', ')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          setSelected([]);
+                          return;
+                        }
+                        const parts = val.split(',')
+                          .map(s => parseInt(s.trim(), 10))
+                          .filter(n => !isNaN(n));
+                        setSelected(parts.slice(0, 3));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && selected.length >= 2) runCompare();
+                      }}
+                      style={{ width: '100%', maxWidth: '300px' }}
+                    />
+                  </div>
+                  {selected.length > 0 && (
+                    <button className="btn btn-ghost btn-sm" onClick={() => setSelected([])}>
+                      Clear
+                    </button>
+                  )}
+                </div>
               </div>
-              {selected.length ? (
-                <button className="btn btn-ghost btn-sm" onClick={() => setSelected([])}>
-                  Clear
-                </button>
-              ) : null}
             </div>
             <div className="node-pick-grid">
               {ids.map((id) => (
-                <button
+                <motion.button
                   key={id}
                   className={`chip${selected.includes(id) ? ' active' : ''}`}
                   onClick={() => toggle(id)}
                   style={{ justifyContent: 'center' }}
+                  whileTap={pressDown}
+                  animate={
+                    selected.includes(id) ? { scale: 1.04 } : { scale: 1 }
+                  }
+                  transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                 >
                   {id}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
@@ -100,15 +128,22 @@ export function ComparePage() {
 
       {results ? (
         <Reveal delay={0.1}>
-          <div
+          <motion.div
+            className="compare-grid"
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
             style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${results.length}, 1fr)`,
-              gap: 16,
+              ['--compare-cols' as string]: String(results.length),
             }}
           >
             {results.map((n) => (
-              <div className="panel" key={n.node_id} style={{ marginBottom: 0 }}>
+              <motion.div
+                className="panel"
+                key={n.node_id}
+                style={{ marginBottom: 0 }}
+                variants={staggerItem}
+              >
                 <div className="panel-inner-core">
                   <div className="panel-header">
                     <div>
@@ -149,23 +184,30 @@ export function ComparePage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </Reveal>
       ) : (
         <Reveal delay={0.1}>
-          <div className="panel empty-state">
+          <motion.div
+            className="panel empty-state"
+            variants={scaleIn}
+            initial="hidden"
+            animate="visible"
+          >
             <div className="panel-inner-core empty-state">
               <GitCompare size={32} />
               <p style={{ margin: 0, marginTop: 16 }}>
                 Pick at least two nodes, then hit Compare.
               </p>
             </div>
-          </div>
+          </motion.div>
         </Reveal>
       )}
     </div>
   )
 }
+
+
 

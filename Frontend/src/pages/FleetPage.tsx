@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Bar,
@@ -25,15 +25,37 @@ import { StatusBadge } from '../components/StatusBadge'
 import { HealthGauge } from '../components/HealthGauge'
 import { Reveal } from '../components/Reveal'
 import { ChartTooltip } from '../components/ChartTooltip'
-import { staggerContainer } from '../motion/presets'
+import { pressDown, staggerContainer } from '../motion/presets'
+
+const FleetRiskLite = lazy(() =>
+  import('../components/three/FleetRiskLite').then((m) => ({
+    default: m.FleetRiskLite,
+  })),
+)
+
+const reduced =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+function canWebGL() {
+  if (typeof window === 'undefined') return false
+  try {
+    const c = document.createElement('canvas')
+    return !!(c.getContext('webgl') || c.getContext('experimental-webgl'))
+  } catch {
+    return false
+  }
+}
 
 export function FleetPage() {
+  const navigate = useNavigate()
   const { seed, critical, watch, health } = useApp()
   const [data, setData] = useState<FleetSnapshot | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<
     'all' | 'critical' | 'watch' | 'healthy' | 'worst5'
   >('all')
+  const webgl = useMemo(() => canWebGL(), [])
 
   useEffect(() => {
     if (health && !health.ready) return
@@ -115,13 +137,19 @@ export function FleetPage() {
       </div>
 
       {data.summary.critical > 0 ? (
-        <Link to="/app/warnings" className="agent-strip">
-          <AlertTriangle size={16} />
-          <span>
-            {data.summary.critical} critical node
-            {data.summary.critical === 1 ? '' : 's'} — open Warnings inbox
-          </span>
-        </Link>
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+        >
+          <Link to="/app/warnings" className="agent-strip">
+            <AlertTriangle size={16} />
+            <span>
+              {data.summary.critical} critical node
+              {data.summary.critical === 1 ? '' : 's'} — open Warnings inbox
+            </span>
+          </Link>
+        </motion.div>
       ) : null}
 
       <div className="fleet-hero">
@@ -135,10 +163,9 @@ export function FleetPage() {
               <div className="gauge-copy">
                 <h2>Fleet health score</h2>
                 <p className="panel-sub">
-                  100 − mean fused risk (0.75·risk + 0.25·anomaly) across{' '}
-                  {data.summary.total_machines.toLocaleString()} machines.
+                  Real-time average system health across {data.summary.total_machines.toLocaleString()} machines.
                   {data.summary.model_version
-                    ? ` · ${data.summary.model_version}`
+                    ? ` · Powered by AI Engine`
                     : ''}
                 </p>
                 {data.drift?.high && data.drift.message ? (
@@ -204,13 +231,14 @@ export function FleetPage() {
             ['healthy', 'Healthy'],
           ] as const
         ).map(([f, label]) => (
-          <button
+          <motion.button
             key={f}
             className={`chip${filter === f ? ' active' : ''}`}
             onClick={() => setFilter(f)}
+            whileTap={pressDown}
           >
             {label}
-          </button>
+          </motion.button>
         ))}
       </div>
 
@@ -261,39 +289,77 @@ export function FleetPage() {
         </div>
       </Reveal>
 
-      <Reveal delay={0.1}>
-        <div className="panel">
-          <div className="panel-inner-core">
-            <div className="panel-header">
-              <div>
-                <h2>Fused risk distribution</h2>
-                <p className="panel-sub">Histogram across the current snapshot</p>
+      <div className="fleet-insights">
+        <Reveal delay={0.08}>
+          <div className="panel fleet-insights-chart">
+            <div className="panel-inner-core">
+              <div className="panel-header">
+                <div>
+                  <h2>Fused risk distribution</h2>
+                  <p className="panel-sub">Histogram across the current snapshot</p>
+                </div>
+              </div>
+              <div style={{ width: '100%', height: 280 }}>
+                <ResponsiveContainer>
+                  <BarChart data={hist} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                    <XAxis
+                      dataKey="bin"
+                      tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-elevated)' }} />
+                    <Bar
+                      dataKey="count"
+                      fill="var(--color-accent)"
+                      radius={[6, 6, 0, 0]}
+                      isAnimationActive
+                      animationBegin={0}
+                      animationDuration={700}
+                      animationEasing="ease-out"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
-            <div style={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
-                <BarChart data={hist} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                  <XAxis
-                    dataKey="bin"
-                    tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: 'var(--ink-muted)' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-elevated)' }} />
-                  <Bar dataKey="count" fill="var(--color-accent)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
           </div>
-        </div>
-      </Reveal>
+        </Reveal>
+
+        {webgl ? (
+          <Reveal delay={0.12}>
+            <div className="panel fleet-insights-cloud">
+              <div className="panel-inner-core">
+                <div className="panel-header">
+                  <div>
+                    <h2>Spatial risk</h2>
+                    <p className="panel-sub">
+                      Risk vs CPU vs GPU · click a node to inspect
+                    </p>
+                  </div>
+                  <Link to="/app/map" className="btn btn-ghost btn-sm">
+                    Open Cluster Map
+                  </Link>
+                </div>
+                <Suspense fallback={<div className="skeleton" style={{ height: 280 }} />}>
+                  <FleetRiskLite
+                    nodes={data.nodes}
+                    reduced={reduced}
+                    onSelect={(id) => navigate(`/app/nodes/${id}`)}
+                  />
+                </Suspense>
+              </div>
+            </div>
+          </Reveal>
+        ) : null}
+      </div>
     </div>
   )
 }
+
 

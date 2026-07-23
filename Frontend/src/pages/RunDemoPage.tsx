@@ -5,8 +5,10 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  DollarSign,
   Play,
   RotateCcw,
+  Search,
   SkipForward,
   Sparkles,
 } from 'lucide-react'
@@ -19,7 +21,7 @@ const reduced =
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const STEP_MS = 2200
-const TOTAL = 5
+const TOTAL = 6
 
 export function RunDemoPage() {
   const {
@@ -102,7 +104,7 @@ export function RunDemoPage() {
 
   useEffect(() => {
     if (!data || reduced) return
-    if (step >= 3) {
+    if (step >= 4) {
       const id = setTimeout(() => setGaugeScore(data.health_after), 350)
       return () => clearTimeout(id)
     }
@@ -121,6 +123,8 @@ export function RunDemoPage() {
   }, [data])
 
   const progress = useMemo(() => ((step + 1) / TOTAL) * 100, [step])
+  const candidates = data?.candidates ?? []
+  const savings = data?.cost_savings
 
   if (error) return <p className="banner">{error}</p>
   if (loading || !data) return <div className="skeleton" style={{ height: 480 }} />
@@ -140,9 +144,8 @@ export function RunDemoPage() {
           </div>
           <h1>Run Demo</h1>
           <p>
-            Walks a real high-risk machine from the current fleet snapshot.
-            Top-bar <strong>Run Demo</strong> advances to the next critical node;
-            <strong> Replay</strong> keeps this one.
+            Detects a high-risk machine, scores safer placement candidates, then
+            recommends the best target — with estimated cost avoided by acting early.
           </p>
         </div>
         <div className="page-actions">
@@ -170,7 +173,7 @@ export function RunDemoPage() {
           transition={reduced ? { duration: 0 } : { duration: 0.4, ease: 'easeOut' }}
         />
       </div>
-      <p className="demo-caption">{data.steps[step]}</p>
+      <p className="demo-caption">{data.steps[Math.min(step, data.steps.length - 1)]}</p>
 
       <div className="demo-stage">
         <AnimatePresence>
@@ -230,7 +233,62 @@ export function RunDemoPage() {
         </AnimatePresence>
 
         <AnimatePresence>
-          {show(2) ? (
+          {show(2) && candidates.length > 0 ? (
+            <motion.div
+              key={`analyze-${data.from.node_id}`}
+              className="demo-card demo-analyze"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={reduced ? { duration: 0 } : { duration: 0.45 }}
+            >
+              <div className="demo-card-title">
+                <Search size={15} /> Analyzing placement candidates
+              </div>
+              <p className="demo-analyze-sub">
+                Ranking fleet nodes by placement score — safety 60% · normality 30% ·
+                history 10%. Best score wins.
+              </p>
+              <div className="demo-candidates">
+                {candidates.map((c, i) => {
+                  const revealed = step > 2 || reduced
+                  const isWinner = c.selected && (step >= 3 || reduced)
+                  return (
+                    <motion.div
+                      key={c.node_id}
+                      className={`demo-candidate${isWinner ? ' selected' : ''}${
+                        revealed && !c.selected && step >= 3 ? ' dimmed' : ''
+                      }`}
+                      initial={{ opacity: 0, x: reduced ? 0 : -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={
+                        reduced ? { duration: 0 } : { delay: 0.06 * i }
+                      }
+                    >
+                      <span className="demo-candidate-rank">#{c.rank}</span>
+                      <div className="demo-candidate-main">
+                        <strong>Node {c.node_id}</strong>
+                        <em>{c.fused_risk.toFixed(1)}% fused</em>
+                      </div>
+                      <div className="demo-candidate-score">
+                        <span>{c.placement_score.toFixed(1)}</span>
+                        {isWinner ? <small>best</small> : null}
+                      </div>
+                      <div
+                        className="demo-candidate-bar"
+                        style={{
+                          width: `${Math.max(8, Math.min(100, c.placement_score))}%`,
+                        }}
+                      />
+                    </motion.div>
+                  )
+                })}
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {show(3) ? (
             <motion.div
               key={`rec-${data.from.node_id}-${data.to.node_id}`}
               className="demo-card demo-move"
@@ -251,7 +309,7 @@ export function RunDemoPage() {
                 </div>
                 <ArrowRight size={24} className="demo-move-arrow" />
                 <div className="demo-move-node to">
-                  <span>Safer target</span>
+                  <span>Best scored target</span>
                   <strong>Node {data.to.node_id}</strong>
                   <em className="healthy">
                     score{' '}
@@ -266,7 +324,7 @@ export function RunDemoPage() {
         </AnimatePresence>
 
         <AnimatePresence>
-          {show(3) ? (
+          {show(4) ? (
             <motion.div
               key={`gauge-${data.from.node_id}`}
               className="demo-card demo-gauge"
@@ -294,13 +352,33 @@ export function RunDemoPage() {
                   {delta.toFixed(1)} pts
                 </span>
               </div>
-              <p className="demo-caveat">{data.caveat}</p>
+
+              {savings ? (
+                <div className="demo-savings">
+                  <div className="demo-savings-icon">
+                    <DollarSign size={18} />
+                  </div>
+                  <div className="demo-savings-body">
+                    <span className="demo-savings-label">
+                      Estimated savings from AI prediction
+                    </span>
+                    <strong className="demo-savings-value">
+                      <CountUp end={Math.round(savings.estimated_usd)} prefix="$" />
+                    </strong>
+                    <span className="demo-savings-meta">
+                      Based on {(savings.probability_avoided * 100).toFixed(0)}% lower failure risk vs job cost
+                    </span>
+                  </div>
+                </div>
+              ) : null}
+
+              <p className="demo-caveat">Projected workload health after moving off the critical server to a safer machine.</p>
             </motion.div>
           ) : null}
         </AnimatePresence>
 
         <AnimatePresence>
-          {show(4) ? (
+          {show(5) ? (
             <motion.div
               key={`done-${data.from.node_id}`}
               className="demo-card demo-done"
@@ -324,7 +402,10 @@ export function RunDemoPage() {
               <p>
                 {data.job.label} moved off a{' '}
                 {(data.from.fused_risk ?? data.from.risk_score).toFixed(0)}%-fused
-                machine onto Node {data.to.node_id}.
+                machine onto Node {data.to.node_id}
+                {savings
+                  ? ` — estimated $${Math.round(savings.estimated_usd).toLocaleString()} avoided by acting before failure.`
+                  : '.'}
               </p>
               <div className="cta-row">
                 <Link to="/app/fleet" className="btn btn-primary">

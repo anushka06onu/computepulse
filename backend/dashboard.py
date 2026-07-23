@@ -69,7 +69,7 @@ def read_key_value_file(path):
 
 required = {
     "data/cluster_data_real.csv": "python prepare_dataset.py",
-    "models/model1.pkl": "python train_model.py",
+    "models/failure_risk_model.pkl": "python train_model.py",
     "results/baseline_results.txt": "python baseline_model.py",
     "results/model_results.txt": "python train_model.py",
     "results/node_risk_scores.csv": "python model2_placement.py",
@@ -94,7 +94,7 @@ def load_data():
 
 @st.cache_resource
 def load_model():
-    with open("models/model1.pkl", "rb") as f:
+    with open("models/failure_risk_model.pkl", "rb") as f:
         return pickle.load(f)
 
 
@@ -284,7 +284,7 @@ with tab2:
 with tab3:
     st.subheader("Where Should My Next Job Run?")
     st.write(
-        "Model 2 recommendation: real per-machine risk aggregated from Model 1's "
+        "Placement recommendation: real per-machine risk aggregated from the failure risk model's "
         "validated predictions, correlated at **r = "
         f"{model2_corr.get('correlation', 0):.3f}** with real observed failure rates."
     )
@@ -422,3 +422,4 @@ with tab5:
 
 st.divider()
 st.caption("ComputePulse — Predict. Prevent. Optimize. Trained on real Alibaba GPU cluster production data.")
+

@@ -21,7 +21,7 @@ REQUIRES:
     data/cluster_data_real.csv   (created by prepare_dataset.py)
 
 CREATES:
-    models/model1.pkl                 <- trained model for the dashboard
+    models/failure_risk_model.pkl     <- trained failure risk model
     results/model_results.txt         <- final test metrics
     results/cv_results.txt            <- cross-validation metrics
     results/feature_importance.txt    <- SHAP feature importance
@@ -44,7 +44,7 @@ from sklearn.metrics import (
 )
 
 DATA_FILE = "data/cluster_data_real.csv"
-MODEL_OUTPUT = "models/model1.pkl"
+MODEL_OUTPUT = "models/failure_risk_model.pkl"
 
 FEATURES = [
     "task_role", "cpu_usage_pct", "gpu_usage_pct",
@@ -253,3 +253,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

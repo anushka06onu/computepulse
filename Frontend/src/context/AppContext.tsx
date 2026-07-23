@@ -37,7 +37,7 @@ interface AppState {
 const Ctx = createContext<AppState | null>(null)
 
 const TOUR_KEY = 'computepulse-tour-done'
-const DEMO_CACHE_PREFIX = 'computepulse-demo-scenario-v3:'
+const DEMO_CACHE_PREFIX = 'computepulse-demo-scenario-v4:'
 const DEMO_RANK_KEY = 'computepulse-demo-rank-v3'
 
 function cacheKey(seed: number, rank: number) {
@@ -48,7 +48,9 @@ function readCachedDemo(seed: number, rank: number): DemoScenario | null {
   try {
     const raw = sessionStorage.getItem(cacheKey(seed, rank))
     if (!raw) return null
-    return JSON.parse(raw) as DemoScenario
+    const parsed = JSON.parse(raw) as DemoScenario
+    if (!parsed.candidates?.length || !parsed.cost_savings) return null
+    return parsed
   } catch {
     return null
   }
@@ -84,7 +86,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [critical, setCritical] = useState(70)
   const [watch, setWatch] = useState(40)
   const [health, setHealth] = useState<HealthResponse | null>(null)
-  const [healthLoading, setHealthLoading] = useState(true)
+  const [healthLoading, setHealthLoading] = useState(false)
   const [tourDone, setTourDone] = useState(
     () => localStorage.getItem(TOUR_KEY) === '1',
   )
@@ -121,9 +123,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  useEffect(() => {
-    void reloadHealth()
-  }, [reloadHealth])
+  // Health is booted from AppShell so the landing page stays free of API wait.
 
   useEffect(() => {
     const cached = readCachedDemo(seed, demoRank)
@@ -156,7 +156,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (
         existing &&
         existing.seed === target &&
-        (existing.rank ?? 0) === rank
+        (existing.rank ?? 0) === rank &&
+        existing.candidates?.length &&
+        existing.cost_savings
       ) {
         return existing
       }
@@ -252,3 +254,5 @@ export function useApp() {
   if (!ctx) throw new Error('useApp must be used within AppProvider')
   return ctx
 }
+
+

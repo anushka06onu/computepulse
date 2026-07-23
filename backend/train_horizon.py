@@ -27,7 +27,7 @@ FEATURES = [
 
 def main() -> None:
     data = pd.read_csv(ROOT / "data/cluster_data_real.csv")
-    with (ROOT / "models/model1.pkl").open("rb") as f:
+    with (ROOT / "models/failure_risk_model.pkl").open("rb") as f:
         risk_model = pickle.load(f)
 
     # Target: next-row risk within same node (shifted). Fall back to current risk.
@@ -70,3 +70,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

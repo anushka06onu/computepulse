@@ -6,12 +6,14 @@ import {
   GitCompare,
   Grid3x3,
   LayoutDashboard,
+  Menu,
   Play,
   RefreshCw,
   Search,
   Settings2,
   Sparkles,
   Wallet,
+  X,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -30,7 +32,7 @@ const links = [
   { to: '/app/nodes', label: 'Node Explorer', id: 'nav-nodes', icon: Search },
   { to: '/app/placement', label: 'Job Placement', id: 'nav-placement', icon: Sparkles },
   { to: '/app/optimize', label: 'Cost Optimization', id: 'nav-optimize', icon: Wallet },
-  { to: '/app/evidence', label: 'Model Evidence', id: 'nav-evidence', icon: BarChart3 },
+  { to: '/app/evidence', label: 'System Accuracy', id: 'nav-evidence', icon: BarChart3 },
   { to: '/app/compare', label: 'Compare Nodes', id: 'nav-compare', icon: GitCompare },
 ]
 
@@ -44,12 +46,19 @@ export function AppShell() {
     tourDone,
     seed,
     requestDemoRun,
+    reloadHealth,
   } = useApp()
   const [busy, setBusy] = useState(false)
   const [showThresh, setShowThresh] = useState(false)
   const [warnCount, setWarnCount] = useState(0)
+  const [navOpen, setNavOpen] = useState(false)
+  const [desktopNavCollapsed, setDesktopNavCollapsed] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+
+  useEffect(() => {
+    void reloadHealth()
+  }, [reloadHealth])
 
   useEffect(() => {
     let cancelled = false
@@ -66,23 +75,61 @@ export function AppShell() {
     }
   }, [seed, critical, watch])
 
+  useEffect(() => {
+    setNavOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!navOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setNavOpen(false)
+    }
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prev
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [navOpen])
+
   return (
-    <div className="app-shell">
-      <aside className="app-nav">
-        <div className="brand" onClick={() => navigate('/')}>
-          <div className="brand-mark">
-            <Activity size={16} strokeWidth={2.5} />
+    <div className={`app-shell${navOpen ? ' nav-open' : ''}${desktopNavCollapsed ? ' desktop-nav-collapsed' : ''}`}>
+      <button
+        type="button"
+        className="nav-backdrop"
+        aria-label="Close navigation"
+        tabIndex={navOpen ? 0 : -1}
+        onClick={() => setNavOpen(false)}
+      />
+
+      <aside className="app-nav" id="app-nav">
+        <div className="nav-drawer-head">
+          <div className="brand" onClick={() => navigate('/')}>
+            <div className="brand-mark">
+              <Activity size={16} strokeWidth={2.5} />
+            </div>
+            <span className="brand-word">
+              Compute<span>Pulse</span>
+            </span>
           </div>
-          Compute<span>Pulse</span>
+          <button
+            type="button"
+            className="nav-close btn btn-ghost btn-sm"
+            aria-label="Close menu"
+            onClick={() => setNavOpen(false)}
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        <div>
+        <div className="nav-scroll">
           <div className="nav-section-label">Workspace</div>
           <nav>
             {links.map((l) => {
               const Icon = l.icon
               const isActiveRoute = location.pathname === l.to
-              
+
               return (
                 <NavLink
                   key={l.to}
@@ -101,19 +148,27 @@ export function AppShell() {
                         inset: 0,
                         background: 'var(--color-accent-soft)',
                         borderRadius: 'var(--radius-sm)',
-                        zIndex: -1
+                        zIndex: -1,
                       }}
                       transition={{
                         type: 'spring',
                         stiffness: 400,
-                        damping: 30
+                        damping: 30,
                       }}
                     />
                   )}
                   <Icon size={17} strokeWidth={2} />
-                  {l.label}
+                  <span className="nav-link-label">{l.label}</span>
                   {l.to === '/app/warnings' && warnCount > 0 ? (
-                    <span className="nav-badge">{warnCount > 99 ? '99+' : warnCount}</span>
+                    <motion.span
+                      className="nav-badge"
+                      key={warnCount}
+                      initial={{ scale: 0.7, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: 'spring', stiffness: 420, damping: 18 }}
+                    >
+                      {warnCount > 99 ? '99+' : warnCount}
+                    </motion.span>
                   ) : null}
                 </NavLink>
               )
@@ -135,8 +190,18 @@ export function AppShell() {
               }
             }}
           >
-            <RefreshCw size={15} className={busy ? undefined : undefined} />
-            {busy ? 'Refreshing…' : 'Refresh snapshot'}
+            <motion.span
+              animate={busy ? { rotate: 360 } : { rotate: 0 }}
+              transition={
+                busy
+                  ? { repeat: Infinity, duration: 0.85, ease: 'linear' }
+                  : { duration: 0.2 }
+              }
+              style={{ display: 'inline-flex' }}
+            >
+              <RefreshCw size={15} />
+            </motion.span>
+            {busy ? 'Loading…' : 'Load new scenario'}
           </button>
           <button
             className="btn btn-ghost"
@@ -170,41 +235,78 @@ export function AppShell() {
             </div>
           ) : null}
           <p className="nav-hint">
-            Press ⌘K to jump anywhere. Snapshot seed #{seed}.
+            Press ⌘K to jump anywhere.
           </p>
         </div>
       </aside>
 
       <main className="app-main">
         <div className="app-topbar">
-          <div className="app-topbar-meta">
-            <span className="meta-pill">
-              <span className="dot" />
-              Historical resample
-            </span>
-            <span className="meta-pill">Alibaba GPU trace · 2020</span>
-            <span className="meta-pill">Seed {seed}</span>
+          <div className="app-topbar-left">
+            <button
+              type="button"
+              className="nav-toggle btn btn-ghost btn-sm"
+              aria-label="Open menu"
+              aria-expanded={navOpen}
+              aria-controls="app-nav"
+              onClick={() => {
+                if (window.innerWidth <= 1024) {
+                  setNavOpen(true)
+                } else {
+                  setDesktopNavCollapsed(!desktopNavCollapsed)
+                }
+              }}
+            >
+              <motion.div
+                animate={desktopNavCollapsed ? { rotate: 0 } : { rotate: 90 }}
+                transition={{ duration: 0.2 }}
+                style={{ display: 'flex' }}
+              >
+                <Menu size={18} />
+              </motion.div>
+            </button>
+            <button
+              type="button"
+              className="app-topbar-brand"
+              onClick={() => { window.location.href = '/' }}
+              aria-label="ComputePulse home"
+            >
+              <span className="brand-mark" aria-hidden>
+                <Activity size={14} strokeWidth={2.5} />
+              </span>
+              <span className="app-topbar-brand-name">
+                Compute<span>Pulse</span>
+              </span>
+            </button>
+            <div className="app-topbar-meta">
+              <span className="meta-pill">
+                <span className="dot" />
+                Live Demo Data
+              </span>
+              <span className="meta-pill meta-pill-hide-sm">
+                Sample GPU Server Fleet
+              </span>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div className="app-topbar-actions">
             <button
               className="btn btn-primary btn-sm"
               id="run-demo-btn"
               onClick={() => {
                 if (location.pathname === '/app/demo') {
-                  // Already on demo → next critical node
                   void requestDemoRun()
                 } else {
-                  // Enter demo with current rank (no skip)
                   navigate('/app/demo')
                 }
               }}
             >
               <Play size={14} />
-              Run Demo
+              <span className="btn-label-full">Run Demo</span>
+              <span className="btn-label-short">Demo</span>
             </button>
             <ThemeToggle />
             <button
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm btn-landing"
               onClick={() => navigate('/')}
             >
               Landing
@@ -220,6 +322,7 @@ export function AppShell() {
             initial="initial"
             animate="animate"
             exit="exit"
+            className="page-motion"
           >
             <Outlet />
           </motion.div>
