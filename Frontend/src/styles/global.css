@@ -488,6 +488,52 @@ select:focus-visible {
   line-height: 1.1;
 }
 
+.kpi-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans, inherit);
+  font-size: 1.28rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.kpi-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.kpi-status.healthy {
+  color: var(--color-healthy, var(--healthy));
+}
+
+.kpi-status.healthy .kpi-status-dot {
+  background: var(--color-healthy, var(--healthy));
+  box-shadow: 0 0 0 4px var(--color-healthy-soft, var(--healthy-soft));
+}
+
+.kpi-status.watch {
+  color: var(--color-watch, var(--watch));
+}
+
+.kpi-status.watch .kpi-status-dot {
+  background: var(--color-watch, var(--watch));
+  box-shadow: 0 0 0 4px var(--color-watch-soft, var(--watch-soft));
+}
+
+.kpi-status.critical {
+  color: var(--color-critical, var(--critical));
+}
+
+.kpi-status.critical .kpi-status-dot {
+  background: var(--color-critical, var(--critical));
+  box-shadow: 0 0 0 4px var(--color-critical-soft, var(--critical-soft));
+  animation: criticalPulse 2s infinite var(--ease-out-expo);
+}
+
 .kpi .delta {
   font-size: 0.82rem;
   color: var(--color-healthy);

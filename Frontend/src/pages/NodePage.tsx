@@ -18,7 +18,6 @@ import { Search } from 'lucide-react'
 import { api, type ExplainResponse, type NodeDetail } from '../api/client'
 import { useApp } from '../context/AppContext'
 import { KPI } from '../components/KPI'
-import { StatusBadge } from '../components/StatusBadge'
 import { Reveal } from '../components/Reveal'
 import { ChartTooltip } from '../components/ChartTooltip'
 import { staggerContainer } from '../motion/presets'
@@ -154,14 +153,26 @@ export function NodePage() {
             <KPI label="Risk" value={`${data.risk_score.toFixed(1)}%`} />
             <KPI label="Anomaly" value={data.anomaly_score.toFixed(2)} />
             <KPI label="Fused" value={`${data.fused_risk.toFixed(1)}%`} tone="watch" />
-            <div className="kpi">
-              <div className="kpi-top">
-                <div className="label">Health</div>
-              </div>
-              <div style={{ marginTop: 4 }}>
-                <StatusBadge health={data.health} />
-              </div>
-            </div>
+            <KPI
+              label="Health"
+              value={
+                <span className={`kpi-status ${data.health}`}>
+                  <span className="kpi-status-dot" aria-hidden />
+                  {data.health === 'critical'
+                    ? 'Critical'
+                    : data.health === 'watch'
+                      ? 'Watch'
+                      : 'Healthy'}
+                </span>
+              }
+              tone={
+                data.health === 'critical'
+                  ? 'critical'
+                  : data.health === 'watch'
+                    ? 'watch'
+                    : 'healthy'
+              }
+            />
             <KPI
               label="Fleet rank"
               value={`#${data.fleet_rank}`}
@@ -478,5 +489,6 @@ function TimelineTooltip({ active, payload }: TimelineTooltipProps) {
     </div>
   )
 }
+
 
 
