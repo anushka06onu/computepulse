@@ -255,7 +255,7 @@ export function FleetRiskLandscape({ reduced = false }: { reduced?: boolean }) {
           />
           {!reduced ? (
             <FxBoundary>
-              <PostFX intensity={hovered == null ? 0.28 : 0.12} />
+              <PostFX intensity={0.28} />
             </FxBoundary>
           ) : null}
 
