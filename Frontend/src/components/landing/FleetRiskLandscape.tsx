@@ -286,14 +286,7 @@ export function FleetRiskLandscape({ reduced = false }: { reduced?: boolean }) {
           </div>
         </div>
 
-        {active ? (
-          <div className="fleet-3d-hud">
-            <strong>Node {active.id}</strong>
-            <span>Risk {active.risk.toFixed(1)}%</span>
-            <span>CPU {active.cpu.toFixed(0)}%</span>
-            <span>GPU {active.gpu.toFixed(0)}%</span>
-          </div>
-        ) : null}
+
       </div>
       <div className="fleet-3d-meta">
         {active ? (

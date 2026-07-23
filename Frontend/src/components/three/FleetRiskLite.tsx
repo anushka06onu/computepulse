@@ -76,17 +76,6 @@ export function FleetRiskLite({
           <span>Low</span>
         </div>
       </div>
-
-      <div className="fleet-lite-caption">
-        {active ? (
-          <>
-            <strong>Node {active.id}</strong>
-            <span>Fused {active.risk.toFixed(1)}%</span>
-          </>
-        ) : (
-          <span>Drag to orbit · click to open</span>
-        )}
-      </div>
     </div>
   )
 }
