@@ -22,7 +22,7 @@ From repo root: `make api` or `make dev` (API + Frontend).
 |------|------|
 | `api/` | FastAPI app (`api.main:app`) |
 | `data/` | Training / inference CSVs (needs `cluster_data_real.csv`) |
-| `models/` | `model1.pkl`, `model_anomaly.pkl`, `model_horizon.pkl` |
+| `models/` | `failure_risk_model.pkl`, `model_anomaly.pkl`, `model_horizon.pkl` |
 | `results/` | Metrics, placement, optimization, eval report |
 | `scripts/` | Eval / report helpers |
 | `train_*.py`, `prepare_dataset.py`, … | Offline training pipeline |
@@ -95,3 +95,4 @@ python model3_optimization.py
 python baseline_model.py
 python scripts/eval_report.py
 ```
+
