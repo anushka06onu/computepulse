@@ -33,7 +33,7 @@ export function NodePage() {
   const [query, setQuery] = useState('')
 
   useEffect(() => {
-    if (health && !health.ready) return
+    if (health?.ready === false) return
     api
       .nodes(seed)
       .then((r) => {
@@ -43,12 +43,12 @@ export function NodePage() {
         }
       })
       .catch((e: Error) => setError(e.message))
-  }, [seed, health, nodeId, navigate])
+  }, [seed, health?.ready, nodeId, navigate])
 
   useEffect(() => {
-    if (!nodeId || (health && !health.ready)) return
+    if (!nodeId || health?.ready === false) return
     let cancelled = false
-    setData(null)
+    // Keep prior KPIs visible while switching; only clear brief.
     setBrief(null)
     // Paint KPIs fast, then upgrade with SHAP/forecast + AI brief
     api
@@ -81,7 +81,7 @@ export function NodePage() {
       cancelled = true
       window.clearTimeout(t)
     }
-  }, [nodeId, seed, critical, watch, health])
+  }, [nodeId, seed, critical, watch, health?.ready])
 
   const filteredIds = useMemo(() => {
     if (!query.trim()) return ids.slice(0, 200)
@@ -525,6 +525,7 @@ function TimelineTooltip({ active, payload }: TimelineTooltipProps) {
     </div>
   )
 }
+
 
 
 
