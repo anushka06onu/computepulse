@@ -34,7 +34,6 @@ def _metric(primary: dict, key: str, *fallbacks: float) -> float:
 def metrics():
     try:
         store.ensure_loaded()
-        store.reload_eval_metrics()
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
 
@@ -181,3 +180,4 @@ def metrics():
             },
         ],
     }
+

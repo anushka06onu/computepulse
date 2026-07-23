@@ -71,16 +71,14 @@ def _scenario_for_seed(use_seed: int, rank: int = 0) -> dict[str, Any]:
     worst = critical_pool.iloc[use_rank]
 
     scored = snap.copy()
-    fail_map = store.data.groupby("node_id")["will_fail"].mean().to_dict()
-    ps = [
-        store.placement_score(
-            float(r["fused_risk"]),
-            float(r["anomaly_score"]),
-            float(fail_map.get(int(r["node_id"]), 0.0)),
-        )
-        for _, r in scored.iterrows()
-    ]
-    scored["placement_score"] = ps
+    fail_map = store.fail_rate_map()
+    hist = scored["node_id"].map(lambda nid: float(fail_map.get(int(nid), 0.0)))
+    fused = scored["fused_risk"].astype(float)
+    anomaly = scored["anomaly_score"].astype(float)
+    safety = 100.0 - fused
+    normality = 100.0 - anomaly * 100.0
+    history = 100.0 - hist * 100.0
+    scored["placement_score"] = (0.6 * safety + 0.3 * normality + 0.1 * history).round(2)
     # Score every other node, then shortlist — recommend only after analysis.
     ranked = (
         scored[scored["node_id"] != int(worst["node_id"])]
@@ -126,8 +124,8 @@ def _scenario_for_seed(use_seed: int, rank: int = 0) -> dict[str, Any]:
             }
         )
 
-    hist = store.data[store.data["node_id"] == worst_id]
-    fail_rate = float(hist["will_fail"].mean()) if len(hist) else 0.0
+    hist_rows = store.data[store.data["node_id"] == worst_id] if store.data is not None else None
+    fail_rate = float(hist_rows["will_fail"].mean()) if hist_rows is not None and len(hist_rows) else float(fail_map.get(worst_id, 0.0))
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         reasons = store.shap_reasons(worst, failure_rate=fail_rate)
@@ -136,13 +134,9 @@ def _scenario_for_seed(use_seed: int, rank: int = 0) -> dict[str, Any]:
     health_after = round(100 - best_fused, 1)
     savings = _early_prediction_savings(worst_fused, best_fused)
 
-    afr = None
-    if store.node_scores is not None:
-        match = store.node_scores.loc[
-            store.node_scores["node_id"] == best_id, "actual_failure_rate"
-        ]
-        if len(match):
-            afr = round(float(match.values[0]), 4)
+    afr = store.actual_failure_rate(best_id)
+    if afr is not None:
+        afr = round(afr, 4)
 
     job_id = 1000 + worst_id
     steps = [
@@ -241,3 +235,4 @@ def scenario(
     )
     _SCENARIO_CACHE[cache_key] = result
     return result
+
