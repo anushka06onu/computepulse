@@ -17,7 +17,7 @@ const steps = [
   },
   {
     title: 'Place the next job',
-    body: 'Rank machines to prefer or avoid based on Model 1 risk aggregated for placement.',
+    body: 'Rank machines to prefer or avoid based on failure risk scores used for placement.',
     path: '/app/placement',
   },
   {
@@ -94,3 +94,4 @@ export function OnboardingTour() {
     </motion.div>
   )
 }
+
