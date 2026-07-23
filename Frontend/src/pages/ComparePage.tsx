@@ -16,12 +16,12 @@ export function ComparePage() {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    if (health && !health.ready) return
+    if (health?.ready === false) return
     api
       .nodes(seed)
       .then((r) => setIds(r.node_ids.slice(0, 500)))
       .catch((e: Error) => setError(e.message))
-  }, [seed, health])
+  }, [seed, health?.ready])
 
   const toggle = (id: number) => {
     setSelected((prev) => {
@@ -187,6 +187,7 @@ export function ComparePage() {
     </div>
   )
 }
+
 
 
 

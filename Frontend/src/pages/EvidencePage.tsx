@@ -29,12 +29,12 @@ export function EvidencePage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (health && !health.ready) return
+    if (health?.ready === false) return
     api
       .metrics()
       .then(setData)
       .catch((e: Error) => setError(e.message))
-  }, [health])
+  }, [health?.ready])
 
   const chartData = useMemo(() => {
     if (!data) return []
@@ -412,6 +412,7 @@ export function EvidencePage() {
     </div>
   )
 }
+
 
 
 
