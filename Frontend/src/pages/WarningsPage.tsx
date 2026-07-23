@@ -109,8 +109,7 @@ export function WarningsPage() {
           </div>
           <h1>Warnings Inbox</h1>
           <p>
-            Triage desk over fused risk, forecast, drift, and unsafe reclaim —
-            grounded briefs, not live remediation. AI Engine version: {data.model_version}
+            Triage system alerts for machine health and optimization opportunities. Powered by AI Engine {data.model_version}.
           </p>
         </div>
         <div className="page-actions">

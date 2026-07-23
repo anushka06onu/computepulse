@@ -48,11 +48,7 @@ export function OptimizePage() {
           </div>
           <h1>Cost Optimization</h1>
           <p>
-            Policy {data.policy ?? 'safe_reclaim_v1'}: reclaim only when fused risk
-            &lt; watch ({data.summary.watch_threshold ?? 40}). Underutilized = avg
-            GPU below {data.summary.underutilized_threshold_pct.toFixed(0)}%. Dollar
-            estimate assumes ${data.summary.assumed_cost_per_gpu_hour.toFixed(2)}
-            /GPU-hour (assumption, not Alibaba ground truth).
+            AI Optimization finds underutilized servers with healthy risk scores to safely reclaim capacity and reduce costs.
           </p>
         </div>
         <div className="page-actions">
@@ -71,8 +67,7 @@ export function OptimizePage() {
       </div>
 
       <motion.div
-        className="kpi-grid"
-        style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}
+        className="kpi-grid grid-3"
         variants={staggerContainer}
         initial="initial"
         animate="animate"

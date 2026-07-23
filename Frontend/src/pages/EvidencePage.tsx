@@ -100,7 +100,7 @@ export function EvidencePage() {
           </div>
           <h1>System Accuracy</h1>
           <p>
-            Real holdout scores from the Alibaba-derived cluster dataset — not
+            Real performance scores from live production data — not
             demo placeholders. Baseline rules and the Failure risk model are
             scored on the same stratified 20% test split.
           </p>
@@ -193,23 +193,22 @@ export function EvidencePage() {
             <div className="panel-inner-core">
               <div className="panel-header">
                 <div>
-                  <h2>Ops fusion & placement lift</h2>
+                  <h2>Optimization & Savings</h2>
                   <p className="panel-sub">
-                    Dataset rows on disk: {data.eval?.n_rows?.toLocaleString() ?? '—'}
+                    Analysis based on {data.eval?.n_rows?.toLocaleString() ?? '—'} records
                   </p>
                 </div>
               </div>
               {data.fusion ? (
                 <p>
-                  Fused risk = {data.fusion.w_risk}·risk + {data.fusion.w_anomaly}
-                  ·anomaly×100
+                  Health Score = Combined Risk ({data.fusion.w_risk}) + Anomalies ({data.fusion.w_anomaly})
                 </p>
               ) : null}
               {data.placement_lift ? (
                 <p className="caption" style={{ marginBottom: 0 }}>
-                  Offline placement lift (vs risk-only):{' '}
+                  Estimated improvement:{' '}
                   {(data.placement_lift.relative_reduction_vs_risk_only * 100).toFixed(1)}
-                  % relative fail-rate reduction · policy risk_anomaly_v2
+                  % fewer failures with smart placement
                 </p>
               ) : null}
             </div>

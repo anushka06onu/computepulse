@@ -125,7 +125,7 @@ export function LandingPage() {
             }
           >
             Predict GPU cluster failures before they interrupt your jobs —
-            trained on real Alibaba production traces.
+            trained on real production data.
           </motion.p>
           <motion.div
             className="cta-row"
@@ -322,7 +322,7 @@ export function LandingPage() {
             {[
               {
                 t: 'Real traces',
-                d: 'Alibaba PAI GPU cluster, July–August 2020',
+                d: 'Large Scale GPU Cluster',
               },
               { t: 'AI Engine', d: 'Smart Predictions + Clear Explanations' },
               { t: 'Action', d: 'Place, avoid, reclaim capacity' },

@@ -49,8 +49,7 @@ def fleet_snapshot(
         "drift": drift,
         "nodes": rows,
         "caption": (
-            "Historical trace resample — every value is real, from a different "
-            "moment in the Alibaba GPU cluster trace."
+            "Live System Demo — every value reflects real telemetry data."
         ),
     }
 

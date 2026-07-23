@@ -147,7 +147,7 @@ def _scenario_for_seed(use_seed: int, rank: int = 0) -> dict[str, Any]:
     job_id = 1000 + worst_id
     steps = [
         "Scanning fleet\u2026",
-        f"Node {worst_id} flagged at {worst_fused}% fused risk",
+        f"Node {worst_id} flagged at {worst_fused}% risk score",
         "Top drivers: " + ", ".join(reasons),
         (
             f"Scoring top {_CANDIDATE_N} placement candidates "
