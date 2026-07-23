@@ -12,12 +12,12 @@ const steps = [
   },
   {
     title: 'Explain any node',
-    body: 'Open a machine to see live metrics and a real per-node SHAP explanation.',
+    body: 'Open a machine to see live metrics and a real per-node AI explanation.',
     path: '/app/nodes',
   },
   {
     title: 'Place the next job',
-    body: 'Rank machines to prefer or avoid based on Model 1 risk aggregated for placement.',
+    body: 'Rank machines to prefer or avoid based on AI risk aggregated for placement.',
     path: '/app/placement',
   },
   {

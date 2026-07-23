@@ -46,7 +46,7 @@ export function EvidencePage() {
           <div className="page-eyebrow">
             <BarChart3 size={12} /> Validation
           </div>
-          <h1>Model Evidence</h1>
+          <h1>System Accuracy</h1>
           <p>
             Supporting metrics behind the risk scores — baseline vs ComputePulse
             AI on real holdout data.
@@ -61,7 +61,7 @@ export function EvidencePage() {
         animate="animate"
       >
         <KPI
-          label="Baseline accuracy"
+          label="Basic Rules accuracy"
           value={
             <>
               <CountUp end={baselineAcc} decimals={1} />%
@@ -69,7 +69,7 @@ export function EvidencePage() {
           }
         />
         <KPI
-          label="ComputePulse accuracy"
+          label="AI Accuracy"
           value={
             <>
               <CountUp end={modelAcc} decimals={1} />%
@@ -79,13 +79,13 @@ export function EvidencePage() {
           tone="healthy"
         />
         <KPI
-          label="ROC-AUC"
+          label="Prediction Confidence"
           value={<CountUp end={modelAuc} decimals={3} />}
           delta={`+${(modelAuc - baselineAuc).toFixed(3)}`}
           tone="healthy"
         />
         <KPI
-          label="5-fold CV AUC"
+          label="Reliability Score"
           value={
             <>
               <CountUp end={data.cv.auc_mean} decimals={3} /> ±{' '}
@@ -94,12 +94,12 @@ export function EvidencePage() {
           }
         />
         <KPI
-          label="PR-AUC"
+          label="Precision Score"
           value={<CountUp end={data.eval?.pr_auc ?? 0} decimals={3} />}
           tone="healthy"
         />
         <KPI
-          label="Top-5% recall"
+          label="Top-5% Caught Failures"
           value={
             <>
               <CountUp end={(data.eval?.top5_recall ?? 0) * 100} decimals={1} />%
@@ -107,11 +107,11 @@ export function EvidencePage() {
           }
         />
         <KPI
-          label="ECE"
+          label="Confidence Error"
           value={<CountUp end={data.eval?.ece ?? 0} decimals={3} />}
         />
         <KPI
-          label="Model version"
+          label="AI Engine version"
           value={
             <span style={{ fontSize: 14 }}>{data.model_version ?? '—'}</span>
           }
@@ -153,7 +153,7 @@ export function EvidencePage() {
           <div className="panel-inner-core">
             <div className="panel-header">
               <div>
-                <h2>Baseline vs ComputePulse AI</h2>
+                <h2>Basic Rules vs ComputePulse AI</h2>
                 <p className="panel-sub">Scores in percent</p>
               </div>
             </div>
@@ -183,7 +183,7 @@ export function EvidencePage() {
                   <Legend wrapperStyle={{ paddingTop: '20px' }} />
                   <Bar
                     dataKey="baseline"
-                    name="Baseline"
+                    name="Basic Rules"
                     fill="var(--color-critical, #dc2626)"
                     radius={[6, 6, 0, 0]}
                     isAnimationActive
@@ -256,7 +256,7 @@ export function EvidencePage() {
               <div className="panel-header">
                 <div>
                   <h2>Global feature importance</h2>
-                  <p className="panel-sub">Mean |SHAP| on test data</p>
+                  <p className="panel-sub">Feature Importance (AI Reasons)</p>
                 </div>
               </div>
               <div style={{ width: '100%', height: 300 }}>

@@ -110,7 +110,7 @@ export function WarningsPage() {
           <h1>Warnings Inbox</h1>
           <p>
             Triage desk over fused risk, forecast, drift, and unsafe reclaim —
-            grounded briefs, not live remediation. {data.model_version}
+            grounded briefs, not live remediation. AI Engine version: {data.model_version}
           </p>
         </div>
         <div className="page-actions">

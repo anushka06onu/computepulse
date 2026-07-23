@@ -32,7 +32,7 @@ const links = [
   { to: '/app/nodes', label: 'Node Explorer', id: 'nav-nodes', icon: Search },
   { to: '/app/placement', label: 'Job Placement', id: 'nav-placement', icon: Sparkles },
   { to: '/app/optimize', label: 'Cost Optimization', id: 'nav-optimize', icon: Wallet },
-  { to: '/app/evidence', label: 'Model Evidence', id: 'nav-evidence', icon: BarChart3 },
+  { to: '/app/evidence', label: 'System Accuracy', id: 'nav-evidence', icon: BarChart3 },
   { to: '/app/compare', label: 'Compare Nodes', id: 'nav-compare', icon: GitCompare },
 ]
 

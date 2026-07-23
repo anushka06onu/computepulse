@@ -291,9 +291,9 @@ export function LandingPage() {
             end={88}
             decimals={0}
             suffix="%"
-            label="Accuracy vs 53% baseline"
+            label="Accuracy vs 53% standard method"
           />
-          <ProofStat end={0.924} decimals={3} label="ROC-AUC on real holdout" />
+          <ProofStat end={0.924} decimals={3} label="Prediction Confidence on real data" />
           <ProofStat
             end={0.902}
             decimals={3}
@@ -321,7 +321,7 @@ export function LandingPage() {
                 t: 'Real traces',
                 d: 'Alibaba PAI GPU cluster, July–August 2020',
               },
-              { t: 'Models', d: 'LightGBM + SHAP explainability' },
+              { t: 'AI Engine', d: 'Smart Predictions + Clear Explanations' },
               { t: 'Action', d: 'Place, avoid, reclaim capacity' },
             ].map((step, i) => (
               <motion.div
