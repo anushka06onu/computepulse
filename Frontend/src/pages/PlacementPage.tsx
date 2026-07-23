@@ -14,7 +14,7 @@ export function PlacementPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (health && !health.ready) return
+    if (health?.ready === false) return
     let cancelled = false
     api
       .placement(n, seed)
@@ -27,7 +27,7 @@ export function PlacementPage() {
     return () => {
       cancelled = true
     }
-  }, [n, seed, health])
+  }, [n, seed, health?.ready])
 
   if (error) return <p className="banner">{error}</p>
   if (!data) return <div className="skeleton" style={{ height: 240 }} />
@@ -253,6 +253,7 @@ export function PlacementPage() {
     </div>
   )
 }
+
 
 
 
