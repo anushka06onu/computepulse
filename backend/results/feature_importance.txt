@@ -1,6 +1,9 @@
-cpu_usage=1.8517728833867477
-gpu_usage=1.554096369583444
-memory_usage=0.901709083161842
-queue_length=0.4386841898581889
-error_count=0.20917354968620736
-task_count=0.09033032208122935
+avg_io_size=2020
+cpu_usage_pct=1756
+io_ops_total=1685
+io_bytes_total=1523
+gpu_mem_pressure=1456
+mem_pressure=1397
+task_role=958
+gpu_usage_pct=829
+cpu_gpu_ratio=776

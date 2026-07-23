@@ -1,2 +1,4 @@
-model_version=model1@ae2618216a1a
+model_version=Failure risk model
 n_rows=100014
+n_test=20003
+computed_at=2026-07-23T20:56:33.530383+00:00
