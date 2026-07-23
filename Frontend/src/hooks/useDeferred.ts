@@ -23,7 +23,7 @@ export function useDeferredReady(ms = 120) {
       cancelIdleCallback?: (id: number) => void
     }
     if (typeof w.requestIdleCallback === 'function') {
-      const id = w.requestIdleCallback(arm, { timeout: 600 })
+      const id = w.requestIdleCallback(arm, { timeout: Math.max(ms, 2500) })
       return () => {
         cancelled = true
         w.cancelIdleCallback?.(id)
@@ -61,3 +61,4 @@ export function MountWhenVisible({
     inView ? children : fallback,
   )
 }
+
