@@ -165,7 +165,7 @@ export function FleetPage() {
                   100 − mean fused risk (0.75·risk + 0.25·anomaly) across{' '}
                   {data.summary.total_machines.toLocaleString()} machines.
                   {data.summary.model_version
-                    ? ` · ${data.summary.model_version}`
+                    ? ` · AI Engine version: ${data.summary.model_version}`
                     : ''}
                 </p>
                 {data.drift?.high && data.drift.message ? (

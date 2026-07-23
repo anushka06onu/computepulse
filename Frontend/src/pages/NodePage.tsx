@@ -133,7 +133,7 @@ export function NodePage() {
           <h1>Node Explorer</h1>
           <p>
             Inspect a real machine: snapshot metrics, failure history, and local
-            SHAP explanation.
+            history, and local AI explanation.
           </p>
         </div>
       </div>
@@ -234,7 +234,7 @@ export function NodePage() {
                   <p className="panel-sub">
                     {brief.llm_used ? 'Groq rewrite' : 'Template'} ·{' '}
                     {brief.embedding_used ? 'HF neighbors' : 'sklearn neighbors'}
-                    {data.model_version ? ` · ${data.model_version}` : ''}
+                    {data.model_version ? ` · AI Engine version: ${data.model_version}` : ''}
                   </p>
                 </div>
               </div>
@@ -313,7 +313,7 @@ export function NodePage() {
                   <div className="panel-header">
                     <div>
                       <h2>Why this risk?</h2>
-                      <p className="panel-sub">Local SHAP for this machine</p>
+                      <p className="panel-sub">Why the AI thinks this</p>
                     </div>
                   </div>
                   <div style={{ width: '100%', height: 320 }}>

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import {
   Activity,
+  ArrowDown,
   ArrowRight,
   ChevronDown,
   Cpu,
@@ -238,7 +239,16 @@ export function LandingPage() {
             aria-hidden
             variants={staggerItem}
           >
-            <ArrowRight size={18} strokeWidth={2.25} />
+            <ArrowRight
+              size={18}
+              strokeWidth={2.25}
+              className="shift-icon-desktop"
+            />
+            <ArrowDown
+              size={18}
+              strokeWidth={2.25}
+              className="shift-icon-mobile"
+            />
           </motion.div>
           <motion.div
             className="shift-col shift-col-next"
@@ -385,7 +395,7 @@ export function LandingPage() {
               t: 'Real traces',
               d: 'Alibaba PAI GPU cluster, July–August 2020',
             },
-            { t: 'Models', d: 'LightGBM + SHAP explainability' },
+            { t: 'AI Engine', d: 'Smart predictions + clear explanations' },
             { t: 'Action', d: 'Place, avoid, reclaim capacity' },
           ].map((step, i) => (
             <motion.div
@@ -603,6 +613,7 @@ function ProofStat({
     </div>
   )
 }
+
 
 
 

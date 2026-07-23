@@ -42,7 +42,7 @@ export function PlacementPage() {
           <h1>Smart Job Placement</h1>
           <p>
             Policy <strong style={{ color: 'var(--ink)' }}>{data.policy ?? 'risk_anomaly_v2'}</strong>{' '}
-            ranks by fused risk + anomaly + history. Failure risk ↔ fail correlation{' '}
+            ranks by fused risk + anomaly + history. AI Prediction↔Fail correlation{' '}
             <strong style={{ color: 'var(--ink)' }}>
               r = {data.correlation.toFixed(3)}
             </strong>

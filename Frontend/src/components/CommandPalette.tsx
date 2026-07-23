@@ -11,7 +11,7 @@ const routes = [
   { label: 'Node Explorer', path: '/app/nodes' },
   { label: 'Job Placement', path: '/app/placement' },
   { label: 'Cost Optimization', path: '/app/optimize' },
-  { label: 'Model Evidence', path: '/app/evidence' },
+  { label: 'System Accuracy', path: '/app/evidence' },
   { label: 'Compare Nodes', path: '/app/compare' },
   { label: 'Landing page', path: '/' },
 ]
