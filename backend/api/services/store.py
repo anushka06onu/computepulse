@@ -142,6 +142,9 @@ class Store:
         self.refresh_seed = 0
         self._ref_feature_means: dict[str, float] = {}
         self._ref_feature_stds: dict[str, float] = {}
+        self._fail_rate_by_node: dict[int, float] = {}
+        self._afr_by_node: dict[int, float] = {}
+        self._explainer = None
 
     def ensure_loaded(self) -> None:
         if self._ready:
@@ -155,7 +158,9 @@ class Store:
         model_path = _path(RISK_MODEL_FILE)
         with model_path.open("rb") as f:
             self.model = pickle.load(f)
-        self.explainer = shap.TreeExplainer(self.model)
+        # TreeExplainer is expensive — build lazily on first SHAP call.
+        self._explainer = None
+        self.explainer = None
         self.model_version = _model_version_from_pkl(model_path)
         self.trained_at = datetime.fromtimestamp(
             model_path.stat().st_mtime, tz=timezone.utc
@@ -200,6 +205,15 @@ class Store:
         if lift_path.exists():
             self.placement_lift = json.loads(lift_path.read_text())
 
+        # O(1) lookups used by placement / demo (avoid re-scanning 100k rows).
+        self._fail_rate_by_node = (
+            self.data.groupby("node_id")["will_fail"].mean().astype(float).to_dict()
+        )
+        self._afr_by_node = {
+            int(r["node_id"]): float(r["actual_failure_rate"])
+            for _, r in self.node_scores.iterrows()
+        }
+
         # Reference stats for PSI drift
         for col in FEATURES:
             series = self.data[col].astype(float)
@@ -207,6 +221,14 @@ class Store:
             self._ref_feature_stds[col] = float(series.std() or 1.0)
 
         self._ready = True
+
+    def get_explainer(self):
+        """Lazy SHAP explainer — skip during boot / warm snapshot scoring."""
+        if self._explainer is None:
+            assert self.model is not None
+            self._explainer = shap.TreeExplainer(self.model)
+            self.explainer = self._explainer
+        return self._explainer
 
     def reload_eval_metrics(self) -> None:
         """Re-read lightweight metric artifacts (safe after repair scripts)."""
@@ -261,10 +283,11 @@ class Store:
         sample = sample.copy()
         sample["risk_score"] = self.model.predict_proba(sample[FEATURES])[:, 1] * 100
         sample["anomaly_score"] = self.anomaly_scores(sample)
-        sample["fused_risk"] = [
-            self.fuse(float(r), float(a))
-            for r, a in zip(sample["risk_score"], sample["anomaly_score"])
-        ]
+        # Vectorized fuse (avoid Python row loop).
+        sample["fused_risk"] = (
+            W_RISK * sample["risk_score"].astype(float)
+            + W_ANOMALY * sample["anomaly_score"].astype(float) * 100.0
+        )
         ranks = sample["fused_risk"].rank(method="min", ascending=False)
         n = max(1, len(sample))
         sample["fleet_rank"] = ranks.astype(int)
@@ -300,11 +323,17 @@ class Store:
         return {"score": score, "grade": grade_for(score), "fusion": dict(FUSION)}
 
     def hist_fail_rate(self, node_id: int) -> float:
-        assert self.data is not None
-        hist = self.data[self.data["node_id"] == node_id]
-        if hist.empty:
-            return 0.0
-        return float(hist["will_fail"].mean())
+        self.ensure_loaded()
+        return float(self._fail_rate_by_node.get(int(node_id), 0.0))
+
+    def fail_rate_map(self) -> dict[int, float]:
+        self.ensure_loaded()
+        return self._fail_rate_by_node
+
+    def actual_failure_rate(self, node_id: int) -> float | None:
+        self.ensure_loaded()
+        val = self._afr_by_node.get(int(node_id))
+        return None if val is None else float(val)
 
     def placement_components(
         self, fused_risk: float, anomaly: float, hist_fail: float
@@ -408,9 +437,9 @@ class Store:
         return reasons or ["Elevated overall risk"]
 
     def local_shap(self, row: pd.Series) -> list[dict[str, Any]]:
-        assert self.explainer is not None
+        explainer = self.get_explainer()
         row_features = row[FEATURES].to_frame().T.astype(float)
-        shap_vals = self.explainer.shap_values(row_features)
+        shap_vals = explainer.shap_values(row_features)
         if isinstance(shap_vals, list):
             local = shap_vals[1][0]
         else:
@@ -473,4 +502,5 @@ class Store:
 
 
 store = Store()
+
 
