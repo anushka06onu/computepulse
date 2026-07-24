@@ -10,6 +10,7 @@ import {
 } from 'react'
 import {
   api,
+  clearRequestCache,
   type DemoPlacement,
   type DemoQueueItem,
   type DemoReservation,
@@ -216,6 +217,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [demoBatchNote, setDemoBatchNote] = useState<string | null>(null)
 
   const inflight = useRef<Promise<DemoScenario> | null>(null)
+  const inflightKey = useRef<string | null>(null)
   const placeLockRef = useRef(false)
   const autoStopRef = useRef(false)
   const autoRunningRef = useRef(false)
@@ -316,6 +318,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const refresh = useCallback(async () => {
+    clearRequestCache()
     const res = await api.refresh()
     setDemoRank(0)
     writeStoredRank(0)
@@ -375,7 +378,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return existing
       }
 
-      if (inflight.current) return inflight.current
+      if (inflight.current && inflightKey.current === `${target}:${rank}`) {
+        return inflight.current
+      }
 
       const req = fetchScenario(target, rank, reservationsRef.current)
         .then((d) => {
@@ -388,9 +393,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return d
         })
         .finally(() => {
-          inflight.current = null
+          if (inflightKey.current === `${target}:${rank}`) {
+            inflight.current = null
+            inflightKey.current = null
+          }
         })
       inflight.current = req
+      inflightKey.current = `${target}:${rank}`
       return req
     },
     [fetchScenario, persistSession],
@@ -793,3 +802,4 @@ export function useApp() {
   if (!ctx) throw new Error('useApp must be used within AppProvider')
   return ctx
 }
+

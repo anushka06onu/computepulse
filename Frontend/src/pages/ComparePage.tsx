@@ -14,6 +14,7 @@ export function ComparePage() {
   const [results, setResults] = useState<NodeDetail[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [chipQuery, setChipQuery] = useState('')
 
   useEffect(() => {
     if (health?.ready === false) return
@@ -105,8 +106,23 @@ export function ComparePage() {
                 </div>
               </div>
             </div>
+            <div className="field" style={{ marginBottom: 12 }}>
+              <label>Filter node list</label>
+              <input
+                value={chipQuery}
+                onChange={(e) => setChipQuery(e.target.value)}
+                placeholder="Type to filter IDs…"
+              />
+            </div>
             <div className="node-pick-grid">
-              {ids.map((id) => (
+              {ids
+                .filter((id) =>
+                  chipQuery.trim()
+                    ? String(id).includes(chipQuery.trim())
+                    : true,
+                )
+                .slice(0, 80)
+                .map((id) => (
                 <motion.button
                   key={id}
                   className={`chip${selected.includes(id) ? ' active' : ''}`}
