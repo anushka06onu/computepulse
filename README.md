@@ -151,7 +151,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## ⚖️ Honesty Notes for Judges
+## ⚖️ Honesty Notes 
 - **The dataset does not explicitly label "optimal placement."** Module 2 aggregates Module 1's validated predictions and correlates them against real observed failure rates to prove it's meaningful, not guessing.
 - **Module 3's dollar figures use a documented assumption** ($2.50/GPU-hour) because the real Alibaba trace is from an internal cluster and has no price list. 
 - **The "Fleet Overview" refresh is simulated**, not a live feed, as this dataset is a static historical trace. The dashboard says this explicitly rather than implying real-time data.
