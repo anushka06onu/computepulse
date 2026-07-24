@@ -179,12 +179,7 @@ export function EvidencePage() {
           label="Confidence Error"
           value={<CountUp end={data.eval?.ece ?? 0} decimals={3} />}
         />
-        <KPI
-          label="AI Engine version"
-          value={
-            <span style={{ fontSize: 14 }}>{data.model_version ?? '—'}</span>
-          }
-        />
+
       </motion.div>
 
       {data.fusion || data.placement_lift ? (

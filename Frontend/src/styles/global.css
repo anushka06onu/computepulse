@@ -242,7 +242,7 @@ select:focus-visible {
 }
 
 .app-main {
-  padding: var(--space-6) var(--space-6) var(--space-8);
+  padding: var(--space-6) var(--space-6) 120px;
   max-width: 1180px;
   width: 100%;
   margin: 0 auto;
@@ -2343,6 +2343,7 @@ tbody tr:hover {
 @media (max-width: 640px) {
   .app-main {
     padding: var(--space-4);
+    padding-bottom: 120px;
   }
 
   .app-topbar {
