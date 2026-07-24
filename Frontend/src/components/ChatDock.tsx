@@ -41,6 +41,18 @@ const FOLLOW_UPS_DEFAULT = [
 
 function followUpsFor(content: string, hasNodeReco: boolean): string[] {
   const text = content.toLowerCase()
+  if (
+    text.includes('out of scope') ||
+    text.includes('irrelevant') ||
+    text.includes('only help with this product')
+  ) {
+    return [
+      'Node 1477',
+      'How do I run the demo?',
+      'What is Warnings?',
+      'List all features',
+    ]
+  }
   if (hasNodeReco) {
     return [
       'Why is it critical?',
@@ -501,4 +513,5 @@ export function ChatDock() {
     </div>
   )
 }
+
 

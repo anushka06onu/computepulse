@@ -56,6 +56,83 @@ INTENT_BANK: list[tuple[str, str]] = [
     ("howto", "how do I run the demo place a job safely"),
 ]
 
+_GREETING_RE = re.compile(
+    r"^(hi|hello|hey|thanks|thank you|thx|ok|okay|help|yo)[.!?]*$",
+    re.IGNORECASE,
+)
+
+# Strong product / fleet signals — weak single words like "health" alone do not count.
+_DOMAIN_PHRASES = (
+    "computepulse",
+    "compute pulse",
+    "fleet",
+    "cluster",
+    "gpu",
+    "node explorer",
+    "job placement",
+    "cost optimization",
+    "system accuracy",
+    "warnings",
+    "warning",
+    "run demo",
+    "the demo",
+    "placement",
+    "fused risk",
+    "anomaly",
+    "shap",
+    "threshold",
+    "critical node",
+    "safer host",
+    "place a job",
+    "place the job",
+    "underutilized",
+    "compare nodes",
+    "cluster map",
+)
+
+
+def _is_greeting(message: str) -> bool:
+    return bool(_GREETING_RE.match(message.strip()))
+
+
+def _is_on_topic(message: str) -> bool:
+    text = message.lower().strip()
+    if not text:
+        return True
+    if NODE_EXPLICIT_RE.search(text):
+        return True
+    if any(p in text for p in _DOMAIN_PHRASES):
+        return True
+    # Feature / playbook titles or multi-word keywords
+    for f in chat_catalog.FEATURES:
+        title = str(f["title"]).lower()
+        if title in text:
+            return True
+        for kw in f.get("keywords", []):
+            k = str(kw).lower()
+            if len(k) >= 5 and k in text:
+                return True
+    for p in chat_catalog.PLAYBOOKS:
+        for kw in p.get("keywords", []):
+            k = str(kw).lower()
+            if len(k) >= 6 and k in text:
+                return True
+    # Common in-product verbs tied to fleet ops
+    if any(
+        k in text
+        for k in (
+            "node ",
+            "nodes",
+            "risk score",
+            "failure rate",
+            "where should",
+            "list all feature",
+            "how does computepulse",
+        )
+    ):
+        return True
+    return False
+
 
 def _groq_chat(system: str, user: str, *, max_tokens: int = 700) -> str | None:
     key = _env("GROQ_API_KEY")
@@ -253,6 +330,13 @@ def parse_intent(
     elif hf and kw == "clarify":
         intent = hf
 
+    # Explicit node mention this turn only (do not inherit history for off-topic checks).
+    explicit_nid = (
+        int(node_id)
+        if node_id is not None
+        else _parse_node_from_text(message, allow_bare=True)
+    )
+
     nid = _extract_node_id(message, history, node_id)
     feature = chat_catalog.match_feature(message)
     playbook = chat_catalog.match_playbook(message)
@@ -275,12 +359,25 @@ def parse_intent(
     if nid is not None and intent == "clarify":
         intent = "node_brief"
 
+    # Off-topic: no fleet/product signal this turn → refuse clearly.
+    # Do not use history node ids to "answer" unrelated chat.
+    if (
+        not _is_greeting(message)
+        and not _is_on_topic(message)
+        and explicit_nid is None
+        and node_id is None
+    ):
+        intent = "off_topic"
+        nid = None
+        feature = None
+        playbook = None
+
     return {
         "intent": intent,
         "node_id": nid,
         "feature_id": feature["id"] if feature else None,
         "playbook_id": playbook["id"] if playbook else None,
-        "embedding_used": hf is not None,
+        "embedding_used": hf is not None and intent != "off_topic",
     }
 
 
@@ -490,6 +587,18 @@ def build_context(
 
 
 def _template_reply(context: dict[str, Any], intent: str) -> str:
+    if intent == "off_topic":
+        return (
+            "That question is **out of scope** for ComputePulse Advisor.\n\n"
+            "I only help with this product: fleet node risk, Warnings, Job Placement, "
+            "the Run Demo, Cost Optimization, and how to use the app.\n\n"
+            "Try something like:\n"
+            "- “Node 1477”\n"
+            "- “Why is it critical?”\n"
+            "- “Where should it go?”\n"
+            "- “How do I run the demo?”\n"
+            "- “List all features”"
+        )
     if context.get("error") == "missing_node_id":
         samples = context.get("sample_nodes") or []
         sample_txt = ", ".join(str(s) for s in samples[:5]) or "open Fleet Overview"
@@ -571,6 +680,10 @@ def _system_prompt() -> str:
         "You are ComputePulse Advisor — a fleet node analyst and product guide. "
         "Use ONLY facts in the frozen context pack. Do not invent node ids, "
         "percentages, features, or routes. "
+        "If the intent is off_topic or the user asks about anything outside "
+        "ComputePulse (weather, sports, general knowledge, other products), "
+        "politely say the question is irrelevant / out of scope and redirect "
+        "to fleet nodes, Warnings, Placement, Demo, or product how-to. "
         "For node questions use sections: Status, Why, Recommend (if candidates "
         "exist), Caveat. "
         "For product help use clear steps and mention paths exactly as given. "
@@ -594,15 +707,18 @@ def chat(
     intent = parsed["intent"]
     nid = parsed["node_id"]
 
-    # Mixed: node + recommend wording
+    # Mixed: node + recommend wording (never for off-topic)
     text_l = message.lower()
-    if nid is not None and any(
+    if intent != "off_topic" and nid is not None and any(
         k in text_l for k in ("where", "recommend", "safer", "place")
     ):
         intent = "recommend"
-    if nid is not None and any(
-        k in text_l for k in ("why", "risk", "critical", "watch", "healthy")
-    ) and intent == "node_brief":
+    if (
+        intent != "off_topic"
+        and nid is not None
+        and any(k in text_l for k in ("why", "risk", "critical", "watch", "healthy"))
+        and intent == "node_brief"
+    ):
         intent = "why_status"
 
     # Resolve feature/playbook if help
@@ -618,49 +734,67 @@ def chat(
         playbook_id = "first_visit"
 
     use_seed = store.refresh_seed if seed is None else seed
-    context = build_context(
-        intent=intent,
-        node_id=nid,
-        seed=use_seed,
-        critical=critical,
-        watch=watch,
-        feature_id=feature_id,
-        playbook_id=playbook_id,
-    )
-
-    template = _template_reply(context, intent)
-    user_prompt = (
-        f"User message:\n{message}\n\n"
-        f"Frozen context pack (JSON-like):\n{context}\n\n"
-        f"Template answer (keep the same facts; improve clarity):\n{template}\n"
-    )
-    llm_text = _groq_chat(_system_prompt(), user_prompt)
-    llm_used = llm_text is not None
-    reply = llm_text if llm_text else template
-
-    node = context.get("node") or {}
-    placement = context.get("placement") or {}
-    cands = placement.get("candidates") or []
-    recommendation = None
-    if cands:
-        recommendation = {
-            "target_node_ids": [c["node_id"] for c in cands[:5]],
-            "why": (
-                "Ranked by placement score (safety 60% + normality 30% + history 10%)."
-            ),
-            "candidates": cands[:5],
+    if intent == "off_topic":
+        context: dict[str, Any] = {
+            "intent": "off_topic",
+            "links": [
+                {"label": "Fleet Overview", "path": "/app/fleet"},
+                {"label": "Run Demo", "path": "/app/demo"},
+                {"label": "Warnings", "path": "/app/warnings"},
+            ],
+            "sources": ["scope"],
         }
+        template = _template_reply(context, intent)
+        # Do not call the LLM for off-topic — keep the refusal grounded.
+        reply = template
+        llm_used = False
+        recommendation = None
+        node: dict[str, Any] = {}
+        providers = {"llm": None, "embeddings": None}
+    else:
+        context = build_context(
+            intent=intent,
+            node_id=nid,
+            seed=use_seed,
+            critical=critical,
+            watch=watch,
+            feature_id=feature_id,
+            playbook_id=playbook_id,
+        )
 
-    providers = {
-        "llm": "groq" if llm_used else None,
-        "embeddings": (
-            "huggingface"
-            if parsed.get("embedding_used")
-            or (context.get("explain") or {}).get("providers", {}).get("embeddings")
-            == "huggingface"
-            else None
-        ),
-    }
+        template = _template_reply(context, intent)
+        user_prompt = (
+            f"User message:\n{message}\n\n"
+            f"Frozen context pack (JSON-like):\n{context}\n\n"
+            f"Template answer (keep the same facts; improve clarity):\n{template}\n"
+        )
+        llm_text = _groq_chat(_system_prompt(), user_prompt)
+        llm_used = llm_text is not None
+        reply = llm_text if llm_text else template
+
+        node = context.get("node") or {}
+        placement = context.get("placement") or {}
+        cands = placement.get("candidates") or []
+        recommendation = None
+        if cands:
+            recommendation = {
+                "target_node_ids": [c["node_id"] for c in cands[:5]],
+                "why": (
+                    "Ranked by placement score (safety 60% + normality 30% + history 10%)."
+                ),
+                "candidates": cands[:5],
+            }
+
+        providers = {
+            "llm": "groq" if llm_used else None,
+            "embeddings": (
+                "huggingface"
+                if parsed.get("embedding_used")
+                or (context.get("explain") or {}).get("providers", {}).get("embeddings")
+                == "huggingface"
+                else None
+            ),
+        }
 
     store.append_shadow(
         {
@@ -690,4 +824,5 @@ def chat(
         ),
         "context_error": context.get("error"),
     }
+
 
