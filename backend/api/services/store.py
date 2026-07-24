@@ -107,7 +107,6 @@ def health_status() -> dict[str, Any]:
     return {
         "ready": len(missing) == 0,
         "missing": missing,
-        "root": str(ROOT),
     }
 
 
@@ -281,6 +280,12 @@ class Store:
 
     def enrich_snapshot(self, sample: pd.DataFrame) -> pd.DataFrame:
         sample = sample.copy()
+        # Multi-core CPU sums can exceed 100%; clip for display/fit, keep raw.
+        if "cpu_usage_pct" in sample.columns:
+            sample["cpu_usage_raw"] = sample["cpu_usage_pct"].astype(float)
+            sample["cpu_usage_pct"] = sample["cpu_usage_raw"].clip(
+                lower=0.0, upper=100.0
+            )
         sample["risk_score"] = self.model.predict_proba(sample[FEATURES])[:, 1] * 100
         sample["anomaly_score"] = self.anomaly_scores(sample)
         # Vectorized fuse (avoid Python row loop).
@@ -306,7 +311,7 @@ class Store:
         self.ensure_loaded()
         if seed is None:
             seed = self.refresh_seed
-        return self._snapshot_cached(seed)
+        return self._snapshot_cached(seed).copy()
 
     def status_code(
         self, risk: float, critical: float = 70, watch: float = 40
@@ -367,13 +372,15 @@ class Store:
 
         out: list[dict[str, Any]] = []
         for i, (_, r) in enumerate(hist.iterrows()):
+            raw_cpu = float(r["cpu_usage_pct"])
             out.append(
                 {
                     "index": i,
                     "risk_score": round(float(r["risk_score"]), 2),
                     "fused_risk": round(float(r["fused_risk"]), 2),
                     "forecast_risk": None,
-                    "cpu_usage_pct": round(float(r["cpu_usage_pct"]), 2),
+                    "cpu_usage_pct": round(min(100.0, max(0.0, raw_cpu)), 2),
+                    "cpu_usage_raw": round(raw_cpu, 2),
                     "gpu_usage_pct": round(float(r["gpu_usage_pct"]), 2),
                     "status": str(r["status"]),
                 }
@@ -455,6 +462,12 @@ class Store:
         risk = float(r["risk_score"])
         anomaly = float(r["anomaly_score"])
         fused = float(r["fused_risk"])
+        raw_cpu = (
+            float(r["cpu_usage_raw"])
+            if "cpu_usage_raw" in r.index and r["cpu_usage_raw"] == r["cpu_usage_raw"]
+            else float(r["cpu_usage_pct"])
+        )
+        clipped_cpu = min(100.0, max(0.0, float(r["cpu_usage_pct"])))
         return {
             "node_id": int(r["node_id"]),
             "risk_score": round(risk, 2),
@@ -462,7 +475,8 @@ class Store:
             "fused_risk": round(fused, 2),
             "risk_percentile": round(float(r["risk_percentile"]), 2),
             "fleet_rank": int(r["fleet_rank"]),
-            "cpu_usage_pct": round(float(r["cpu_usage_pct"]), 2),
+            "cpu_usage_pct": round(clipped_cpu, 2),
+            "cpu_usage_raw": round(raw_cpu, 2),
             "gpu_usage_pct": round(float(r["gpu_usage_pct"]), 2),
             "mem_pressure": round(float(r["mem_pressure"]), 3),
             "duration_hours": round(float(r["duration_hours"]), 2),
@@ -502,5 +516,6 @@ class Store:
 
 
 store = Store()
+
 
 

@@ -9,10 +9,42 @@ from api.services import chat_catalog
 from api.services.explain import explain_node, _env, _hf_embed, _timeout
 from api.services.store import store
 
-NODE_RE = re.compile(
-    r"(?:node\s*#?\s*|n(?:ode)?\s*)(\d{1,5})\b|\b(\d{1,5})\b",
+_EXPLAIN_CACHE: dict[tuple, dict[str, Any]] = {}
+_EXPLAIN_CACHE_MAX = 64
+
+
+def _cached_explain(node_id: int, seed: int, critical: float, watch: float) -> dict[str, Any]:
+    key = (int(seed), int(node_id), float(critical), float(watch))
+    hit = _EXPLAIN_CACHE.get(key)
+    if hit is not None:
+        return hit
+    expl = explain_node(
+        node_id, seed=seed, critical=critical, watch=watch, rich=False
+    )
+    pack = {
+        "summary": expl.get("summary"),
+        "shap_reasons": expl.get("shap_reasons"),
+        "neighbors": expl.get("neighbors"),
+        "providers": expl.get("providers"),
+    }
+    if len(_EXPLAIN_CACHE) >= _EXPLAIN_CACHE_MAX:
+        _EXPLAIN_CACHE.pop(next(iter(_EXPLAIN_CACHE)))
+    _EXPLAIN_CACHE[key] = pack
+    return pack
+
+
+# Require explicit node wording, or bare digits only when id exists in snapshot.
+NODE_EXPLICIT_RE = re.compile(
+    r"(?:node\s*#?\s*|n#\s*|node_id\s*=\s*)(\d{1,5})\b",
     re.IGNORECASE,
 )
+BARE_ID_RE = re.compile(r"\b(\d{1,5})\b")
+THRESHOLD_CTX_RE = re.compile(
+    r"(?:set\s+\w+\s+to\s*\d+|critical\s*(?:above|to|≥|>=|>)\s*\d+|watch\s*(?:above|to|≥|>=|>)\s*\d+|\bthreshold\b)",
+    re.IGNORECASE,
+)
+# Back-compat alias for any external imports/tests
+NODE_RE = NODE_EXPLICIT_RE
 
 INTENT_BANK: list[tuple[str, str]] = [
     ("node_brief", "tell me about this node status metrics"),
@@ -56,6 +88,30 @@ def _groq_chat(system: str, user: str, *, max_tokens: int = 700) -> str | None:
         return None
 
 
+def _id_in_fleet(nid: int, seed: int | None = None) -> bool:
+    try:
+        snap = store.get_snapshot(seed)
+        return bool((snap["node_id"] == int(nid)).any())
+    except Exception:
+        return False
+
+
+def _parse_node_from_text(text: str, *, allow_bare: bool) -> int | None:
+    m = NODE_EXPLICIT_RE.search(text)
+    if m:
+        return int(m.group(1))
+    if not allow_bare:
+        return None
+    # "set critical to 70" must not resolve as node 70
+    if THRESHOLD_CTX_RE.search(text):
+        return None
+    for bm in BARE_ID_RE.finditer(text):
+        nid = int(bm.group(1))
+        if _id_in_fleet(nid):
+            return nid
+    return None
+
+
 def _extract_node_id(
     message: str,
     history: list[dict[str, str]],
@@ -63,22 +119,15 @@ def _extract_node_id(
 ) -> int | None:
     if explicit is not None:
         return int(explicit)
-    m = NODE_RE.search(message)
-    if m:
-        raw = m.group(1) or m.group(2)
-        if raw is not None:
-            return int(raw)
-    # Prefer last assistant/user mention in history.
+    found = _parse_node_from_text(message, allow_bare=True)
+    if found is not None:
+        return found
+    # Prefer last explicit mention in history (no bare digits from prior turns).
     for turn in reversed(history):
         content = turn.get("content") or ""
-        hm = NODE_RE.search(content)
-        if hm:
-            raw = hm.group(1) or hm.group(2)
-            if raw is not None:
-                try:
-                    return int(raw)
-                except ValueError:
-                    continue
+        found = _parse_node_from_text(content, allow_bare=False)
+        if found is not None:
+            return found
     return None
 
 
@@ -157,12 +206,10 @@ def _keyword_intent(message: str) -> str:
     if feat:
         return "feature_help"
 
-    if NODE_RE.search(text):
+    if NODE_EXPLICIT_RE.search(text):
         return "node_brief"
 
-    if text.isdigit():
-        return "node_brief"
-
+    # Bare digits alone are not a node brief (avoids "set critical to 70").
     return "clarify"
 
 
@@ -391,15 +438,9 @@ def build_context(
                         "path": f"/app/nodes/{node_id}",
                     }
                 )
-                expl = explain_node(
-                    node_id, seed=seed, critical=critical, watch=watch, rich=True
+                pack["explain"] = _cached_explain(
+                    node_id, seed, critical, watch
                 )
-                pack["explain"] = {
-                    "summary": expl.get("summary"),
-                    "shap_reasons": expl.get("shap_reasons"),
-                    "neighbors": expl.get("neighbors"),
-                    "providers": expl.get("providers"),
-                }
                 sources.append("explain")
 
                 if (
@@ -649,3 +690,4 @@ def chat(
         ),
         "context_error": context.get("error"),
     }
+
