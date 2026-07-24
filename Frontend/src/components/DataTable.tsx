@@ -71,7 +71,7 @@ export function DataTable<T extends Record<string, unknown>>({
           initial="initial"
           animate="animate"
         >
-          {sorted.map((row, i) => {
+          {sorted.slice(0, 100).map((row, i) => {
             const health = row.health as Health | undefined
             const animateRow = i < ROW_CAP
             return (
@@ -95,6 +95,13 @@ export function DataTable<T extends Record<string, unknown>>({
               </motion.tr>
             )
           })}
+          {sorted.length > 100 && (
+            <tr>
+              <td colSpan={columns.length} style={{ textAlign: 'center', padding: '1rem', color: 'var(--ink-muted)' }}>
+                Showing top 100 of {sorted.length.toLocaleString()} rows. (Sort to see others)
+              </td>
+            </tr>
+          )}
         </motion.tbody>
       </table>
     </div>
