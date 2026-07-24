@@ -1,4 +1,3 @@
-import { Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppProvider } from './context/AppContext'
 import { LandingPage } from './pages/LandingPage'
@@ -13,14 +12,6 @@ import { ComparePage } from './pages/ComparePage'
 import { ClusterMapPage } from './pages/ClusterMapPage'
 import { RunDemoPage } from './pages/RunDemoPage'
 import { WarningsPage } from './pages/WarningsPage'
-
-function RouteFallback() {
-  return (
-    <div className="route-fallback" aria-busy="true" aria-label="Loading">
-      <div className="route-fallback-pulse" />
-    </div>
-  )
-}
 
 
 export default function App() {
