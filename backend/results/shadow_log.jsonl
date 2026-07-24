@@ -470,3 +470,10 @@
 {"event": "demo_place", "from": 683, "to": 1247, "health_before": 20.2, "health_after": 91.8, "placement_delta": 61.3, "estimated_savings_usd": 651.6, "job_id": 5107, "seed": 0, "rank": 24, "critical": 70.0, "reservations": 24, "session_index": 25, "constrained": false, "ts": 1784917012.820811}
 {"event": "demo", "from": 1391, "to": 730, "health_before": 10.7, "health_after": 94.4, "placement_delta": 79.7, "estimated_savings_usd": 761.7, "job_id": 5117, "seed": 1, "rank": 0, "critical": 70.0, "reservations": 0, "session_index": null, "constrained": false, "ts": 1784917027.81741}
 {"event": "demo", "from": 1477, "to": 1413, "health_before": 6.0, "health_after": 95.5, "placement_delta": 82.7, "estimated_savings_usd": 814.4, "job_id": 5134, "seed": 2, "rank": 0, "critical": 70.0, "reservations": 0, "session_index": null, "constrained": false, "ts": 1784917039.7091331}
+{"event": "warning_open", "alert_id": "node_critical:1521:seed0", "type": "node_critical", "node_id": 1521, "seed": 0, "ts": 1784920747.6985059}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784920812.463897}
+{"event": "warning_open", "alert_id": "node_critical:1521:seed0", "type": "node_critical", "node_id": 1521, "seed": 0, "ts": 1784920836.44805}
+{"event": "chat", "intent": "node_brief", "node_id": 1477, "llm_used": true, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784921170.939452}
+{"event": "chat", "intent": "howto", "node_id": null, "llm_used": true, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784921254.3149922}
+{"event": "chat", "intent": "feature_help", "node_id": null, "llm_used": true, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784921584.724664}
+{"event": "chat", "intent": "node_brief", "node_id": 1477, "llm_used": true, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784921594.9186618}
