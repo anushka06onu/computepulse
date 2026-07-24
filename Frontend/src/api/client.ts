@@ -147,6 +147,7 @@ export interface DemoCandidate {
   }
   meets_requirements?: boolean
   selected: boolean
+  reserved?: boolean
 }
 
 export interface DemoCostSavings {
@@ -158,6 +159,14 @@ export interface DemoCostSavings {
   assumed_incident_overhead_usd: number
   formula: string
   caveat: string
+}
+
+export interface DemoReservation {
+  node_id: number
+  cpu_delta: number
+  gpu_delta: number
+  mem_delta: number
+  job_id: number
 }
 
 export interface DemoScenario {
@@ -211,6 +220,19 @@ export interface DemoScenario {
   }
   critical_threshold?: number
   source?: string
+  session_note?: string | null
+  constrained?: boolean
+  reservations_applied?: number
+}
+
+export interface DemoPlacement extends DemoScenario {
+  placed_at: number
+  session_index: number
+}
+
+export interface DemoQueueItem {
+  rank: number
+  job_preview?: { id: number; label: string }
 }
 
 export interface PlacementRow {
@@ -401,8 +423,7 @@ const BASE = (
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`)
   if (!res.ok) {
-    const detail = await res.text()
-    throw new Error(detail || res.statusText)
+    throw new Error(await readApiError(res))
   }
   return res.json() as Promise<T>
 }
@@ -414,10 +435,21 @@ async function post<T>(path: string, body?: unknown): Promise<T> {
     body: body ? JSON.stringify(body) : undefined,
   })
   if (!res.ok) {
-    const detail = await res.text()
-    throw new Error(detail || res.statusText)
+    throw new Error(await readApiError(res))
   }
   return res.json() as Promise<T>
+}
+
+async function readApiError(res: Response): Promise<string> {
+  const detail = await res.text()
+  if (!detail) return res.statusText || `HTTP ${res.status}`
+  try {
+    const parsed = JSON.parse(detail) as { detail?: unknown }
+    if (typeof parsed.detail === 'string') return parsed.detail
+  } catch {
+    /* plain text */
+  }
+  return detail
 }
 
 export const api = {
@@ -464,6 +496,30 @@ export const api = {
         seed != null ? `&seed=${seed}` : ''
       }`,
     ),
+  demoPlace: (body: {
+    seed?: number
+    critical?: number
+    watch?: number
+    rank?: number
+    reservations?: DemoReservation[]
+    session_index?: number
+  }) => post<DemoScenario>('/api/demo/session/place', body),
+  demoPlaceBatch: (body: {
+    seed?: number
+    critical?: number
+    watch?: number
+    ranks: number[]
+    reservations?: DemoReservation[]
+    session_index_start?: number
+  }) =>
+    post<{
+      seed: number
+      placements: DemoScenario[]
+      reservations: DemoReservation[]
+      placed_count: number
+      requested_count: number
+      stopped_reason: string | null
+    }>('/api/demo/session/place-batch', body),
   explain: (nodeId: number, seed?: number, critical = 70, watch = 40) =>
     post<ExplainResponse>('/api/explain', {
       node_id: nodeId,
@@ -510,5 +566,6 @@ export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   a.click()
   URL.revokeObjectURL(url)
 }
+
 
 
