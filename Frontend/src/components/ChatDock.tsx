@@ -7,10 +7,18 @@ import {
   X,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { api, type ChatLink, type ChatMessage } from '../api/client'
+import {
+  api,
+  type ChatLink,
+  type ChatMessage,
+  type ChatResponse,
+} from '../api/client'
+
+type ChatRecommendation = NonNullable<ChatResponse['recommendation']>
 
 type DockMessage = ChatMessage & {
   links?: ChatLink[]
+  recommendation?: ChatRecommendation | null
   provider?: string
   health?: string | null
 }
@@ -28,13 +36,50 @@ const HELP_CHIPS = [
   'What is Warnings?',
 ]
 
+const SAFE_PATH = /^\/(app\/[\w\-./]*|)$/
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function formatInline(escaped: string): string {
+  return escaped
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^_(.+)_$/, '<em>$1</em>')
+}
+
+/** Drop Recommend prose when structured recommendation card is shown. */
+function stripRecommendBlock(text: string): string {
+  const lines = text.split('\n')
+  const out: string[] = []
+  let skipping = false
+  for (const line of lines) {
+    if (/^\*\*Recommend:\*\*/i.test(line.trim()) || /^Recommend:/i.test(line.trim())) {
+      skipping = true
+      continue
+    }
+    if (skipping) {
+      // Continue skip through bullet list / blank lines until next **Section:**
+      if (/^\*\*[A-Za-z]/.test(line.trim()) && !/^\*\*Recommend/i.test(line.trim())) {
+        skipping = false
+        out.push(line)
+      }
+      continue
+    }
+    out.push(line)
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+}
+
 function renderReply(text: string) {
-  // Lightweight markdown-ish: **bold**, line breaks, bullets
   const lines = text.split('\n')
   return lines.map((line, i) => {
-    const html = line
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/^_(.+)_$/, '<em>$1</em>')
+    const escaped = escapeHtml(line)
+    const html = formatInline(escaped)
     if (!line.trim()) return <br key={`br-${i}`} />
     if (line.trimStart().startsWith('- ')) {
       return (
@@ -66,6 +111,10 @@ function renderReply(text: string) {
   })
 }
 
+function isSafePath(path: string): boolean {
+  return SAFE_PATH.test(path)
+}
+
 export function ChatDock() {
   const { seed, critical, watch } = useApp()
   const navigate = useNavigate()
@@ -83,6 +132,8 @@ export function ChatDock() {
   ])
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const toggleRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -92,6 +143,28 @@ export function ChatDock() {
   useEffect(() => {
     if (open) inputRef.current?.focus()
   }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false)
+        toggleRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const go = useCallback(
+    (path: string) => {
+      if (!isSafePath(path)) return
+      navigate(path)
+      setOpen(false)
+      toggleRef.current?.focus()
+    },
+    [navigate],
+  )
 
   const send = useCallback(
     async (raw: string) => {
@@ -120,10 +193,9 @@ export function ChatDock() {
             role: 'assistant',
             content: res.reply,
             links: res.links,
+            recommendation: res.recommendation,
             health: res.health,
-            provider: res.llm_used
-              ? 'Groq'
-              : 'Template',
+            provider: res.llm_used ? 'Groq' : 'Template',
           },
         ])
       } catch (e) {
@@ -148,7 +220,13 @@ export function ChatDock() {
   return (
     <div className="chat-dock">
       {open ? (
-        <div className="chat-dock-panel" role="dialog" aria-label="ComputePulse Advisor">
+        <div
+          ref={panelRef}
+          className="chat-dock-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-label="ComputePulse Advisor"
+        >
           <header className="chat-dock-head">
             <div>
               <strong>Advisor</strong>
@@ -158,7 +236,10 @@ export function ChatDock() {
               type="button"
               className="btn btn-ghost btn-sm"
               aria-label="Close chat"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false)
+                toggleRef.current?.focus()
+              }}
             >
               <X size={16} />
             </button>
@@ -192,42 +273,112 @@ export function ChatDock() {
           </div>
 
           <div className="chat-dock-messages">
-            {messages.map((m, i) => (
-              <div
-                key={`${m.role}-${i}`}
-                className={`chat-dock-bubble chat-dock-${m.role}`}
-              >
-                {m.role === 'assistant' ? (
-                  <div className="chat-dock-meta">
-                    <Sparkles size={12} />
-                    {m.provider ?? 'Advisor'}
-                    {m.health ? ` · ${m.health}` : ''}
+            {messages.map((m, i) => {
+              const reco = m.recommendation
+              const hasReco =
+                !!reco &&
+                ((reco.candidates && reco.candidates.length > 0) ||
+                  (reco.target_node_ids && reco.target_node_ids.length > 0))
+              const bodyText =
+                m.role === 'assistant' && hasReco
+                  ? stripRecommendBlock(m.content)
+                  : m.content
+              const recoIds = new Set(
+                (reco?.candidates?.map((c) => c.node_id) ??
+                  reco?.target_node_ids ??
+                  []).map(Number),
+              )
+              const extraLinks = (m.links ?? []).filter((link) => {
+                const match = link.path.match(/\/nodes\/(\d+)/)
+                if (match && recoIds.has(Number(match[1]))) return false
+                return isSafePath(link.path)
+              })
+
+              return (
+                <div
+                  key={`${m.role}-${i}`}
+                  className={`chat-dock-bubble chat-dock-${m.role}`}
+                >
+                  {m.role === 'assistant' ? (
+                    <div className="chat-dock-meta">
+                      <Sparkles size={12} />
+                      {m.provider ?? 'Advisor'}
+                      {m.health ? ` · ${m.health}` : ''}
+                    </div>
+                  ) : null}
+                  <div className="chat-dock-body">
+                    {m.role === 'assistant'
+                      ? renderReply(bodyText)
+                      : m.content}
                   </div>
-                ) : null}
-                <div className="chat-dock-body">
-                  {m.role === 'assistant'
-                    ? renderReply(m.content)
-                    : m.content}
+                  {hasReco && reco ? (
+                    <div className="chat-dock-recommend">
+                      <strong className="chat-dock-recommend-title">
+                        Recommendation
+                      </strong>
+                      {reco.why ? (
+                        <p className="chat-dock-recommend-why">{reco.why}</p>
+                      ) : null}
+                      <ul className="chat-dock-recommend-list">
+                        {(reco.candidates && reco.candidates.length > 0
+                          ? reco.candidates.slice(0, 5)
+                          : (reco.target_node_ids ?? []).slice(0, 5).map((id) => ({
+                              node_id: id,
+                              placement_score: 0,
+                              fused_risk: 0,
+                              why: '',
+                            }))
+                        ).map((c) => (
+                          <li key={c.node_id}>
+                            <div className="chat-dock-recommend-row">
+                              <div>
+                                <span className="chat-dock-recommend-node">
+                                  Node {c.node_id}
+                                </span>
+                                {c.placement_score ? (
+                                  <span className="chat-dock-recommend-meta">
+                                    score {c.placement_score}
+                                    {c.fused_risk != null
+                                      ? ` · fused ${c.fused_risk}%`
+                                      : ''}
+                                  </span>
+                                ) : null}
+                                {c.why ? (
+                                  <span className="chat-dock-recommend-reason">
+                                    {c.why}
+                                  </span>
+                                ) : null}
+                              </div>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => go(`/app/nodes/${c.node_id}`)}
+                              >
+                                Open
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {extraLinks.length > 0 ? (
+                    <div className="chat-dock-links">
+                      {extraLinks.slice(0, 8).map((link) => (
+                        <button
+                          key={`${link.path}-${link.label}`}
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => go(link.path)}
+                        >
+                          Open {link.label}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
-                {m.links && m.links.length > 0 ? (
-                  <div className="chat-dock-links">
-                    {m.links.slice(0, 8).map((link) => (
-                      <button
-                        key={`${link.path}-${link.label}`}
-                        type="button"
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => {
-                          navigate(link.path)
-                          setOpen(false)
-                        }}
-                      >
-                        Open {link.label}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ))}
+              )
+            })}
             {busy ? (
               <div className="chat-dock-bubble chat-dock-assistant">
                 <div className="chat-dock-meta">Thinking…</div>
@@ -270,6 +421,7 @@ export function ChatDock() {
       ) : null}
 
       <button
+        ref={toggleRef}
         type="button"
         className="chat-dock-toggle btn btn-primary"
         aria-expanded={open}
