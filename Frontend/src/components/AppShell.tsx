@@ -22,6 +22,7 @@ import { ReadinessBanner } from './ReadinessBanner'
 import { pageVariants } from '../motion/presets'
 import { ThemeToggle } from './ThemeToggle'
 import { api } from '../api/client'
+import { ChatDock } from './ChatDock'
 
 const CommandPalette = lazy(() =>
   import('./CommandPalette').then((m) => ({ default: m.CommandPalette })),
@@ -339,9 +340,11 @@ export function AppShell() {
         <CommandPalette />
         {!tourDone ? <OnboardingTour /> : null}
       </Suspense>
+      <ChatDock />
     </div>
   )
 }
+
 
 
 

@@ -235,6 +235,39 @@ export interface DemoQueueItem {
   job_preview?: { id: number; label: string }
 }
 
+export interface ChatLink {
+  label: string
+  path: string
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface ChatResponse {
+  reply: string
+  intent: string
+  node_id: number | null
+  health: string | null
+  links: ChatLink[]
+  recommendation: {
+    target_node_ids: number[]
+    why: string
+    candidates?: Array<{
+      node_id: number
+      placement_score: number
+      fused_risk: number
+      why: string
+    }>
+  } | null
+  sources: string[]
+  providers: { llm: string | null; embeddings: string | null }
+  llm_used: boolean
+  caveat: string
+  context_error?: string | null
+}
+
 export interface PlacementRow {
   node_id: number
   risk_score: number
@@ -537,6 +570,14 @@ export const api = {
       requested_count: number
       stopped_reason: string | null
     }>('/api/demo/session/place-batch', body),
+  chat: (body: {
+    message: string
+    history?: ChatMessage[]
+    seed?: number
+    critical?: number
+    watch?: number
+    node_id?: number | null
+  }) => post<ChatResponse>('/api/chat', body),
   explain: (nodeId: number, seed?: number, critical = 70, watch = 40) =>
     post<ExplainResponse>('/api/explain', {
       node_id: nodeId,
