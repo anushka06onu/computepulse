@@ -84,7 +84,7 @@ export function ClusterTopology3D({
   const visible = useInViewport(wrap)
   const [hovered, setHovered] = useState<number | null>(null)
   const points = useMemo(() => layoutPoints(nodes.slice(0, 900)), [nodes])
-  const active = points.find((p) => p.id === hovered)
+
 
   return (
     <div className="map-3d" ref={wrap}>

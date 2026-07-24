@@ -34,7 +34,6 @@ export function FleetRiskLite({
   const visible = useInViewport(wrap)
   const [hovered, setHovered] = useState<number | null>(null)
   const points = useMemo(() => toCloud(nodes), [nodes])
-  const active = points.find((p) => p.id === hovered)
 
   return (
     <div className="fleet-lite-3d" ref={wrap}>

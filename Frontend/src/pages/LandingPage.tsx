@@ -505,7 +505,6 @@ export function LandingPage() {
 
         <div className="site-footer-bar">
           <span>© {new Date().getFullYear()} ComputePulse</span>
-          <span>Trained on Alibaba PAI GPU cluster traces</span>
         </div>
       </footer>
     </div>
