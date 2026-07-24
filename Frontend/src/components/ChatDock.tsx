@@ -23,18 +23,58 @@ type DockMessage = ChatMessage & {
   health?: string | null
 }
 
-const NODE_CHIPS = [
+const STARTER_SUGGESTIONS = [
   'Node 1477',
   'Why is it critical?',
   'Where should it go?',
-]
-
-const HELP_CHIPS = [
   'How does ComputePulse work?',
-  'List all features',
   'How do I run the demo?',
   'What is Warnings?',
 ]
+
+const FOLLOW_UPS_DEFAULT = [
+  'List all features',
+  'How do I run the demo?',
+  'What is Warnings?',
+  'Node 1477',
+]
+
+function followUpsFor(content: string, hasNodeReco: boolean): string[] {
+  const text = content.toLowerCase()
+  if (hasNodeReco) {
+    return [
+      'Why is it critical?',
+      'Where should it go?',
+      'Open Job Placement',
+      'What is Warnings?',
+    ].filter((s) => !text.includes(s.toLowerCase().slice(0, 12)))
+  }
+  if (text.includes('demo') || text.includes('playbook')) {
+    return [
+      'What is Warnings?',
+      'How does Job Placement work?',
+      'List all features',
+      'Node 1477',
+    ]
+  }
+  if (text.includes('warning')) {
+    return [
+      'How do I run the demo?',
+      'Where should it go?',
+      'List all features',
+      'Node 1477',
+    ]
+  }
+  if (text.includes('feature') || text.includes('computepulse work')) {
+    return [
+      'How do I run the demo?',
+      'What is Warnings?',
+      'What is Job Placement?',
+      'Node 1477',
+    ]
+  }
+  return FOLLOW_UPS_DEFAULT
+}
 
 const SAFE_PATH = /^\/(app\/[\w\-./]*|)$/
 
@@ -126,7 +166,7 @@ export function ChatDock() {
     {
       role: 'assistant',
       content:
-        'I am ComputePulse Advisor. Ask about a **node number** (status, why critical/watch/healthy, safer hosts), or how to use any feature.',
+        'Hi — I am the ComputePulse Advisor. Ask about any **node** (status, risk drivers, safer hosts) or how to use a feature. Pick a suggestion below to get started.',
       provider: 'Template',
     },
   ])
@@ -228,49 +268,30 @@ export function ChatDock() {
           aria-label="ComputePulse Advisor"
         >
           <header className="chat-dock-head">
-            <div>
-              <strong>Advisor</strong>
-              <span>Nodes · features · how-to</span>
+            <div className="chat-dock-head-id">
+              <span className="chat-dock-avatar" aria-hidden>
+                <Sparkles size={16} strokeWidth={2.25} />
+              </span>
+              <div className="chat-dock-head-copy">
+                <strong>ComputePulse Advisor</strong>
+                <p className="chat-dock-head-status">
+                  <span className="chat-dock-status-dot" aria-hidden />
+                  Ready to help
+                </p>
+              </div>
             </div>
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
+              className="chat-dock-close"
               aria-label="Close chat"
               onClick={() => {
                 setOpen(false)
                 toggleRef.current?.focus()
               }}
             >
-              <X size={16} />
+              <X size={15} strokeWidth={2.25} />
             </button>
           </header>
-
-          <div className="chat-dock-chips" aria-label="Suggestions">
-            <span className="chat-dock-chip-label">Nodes</span>
-            {NODE_CHIPS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className="chat-dock-chip"
-                disabled={busy}
-                onClick={() => void send(c)}
-              >
-                {c}
-              </button>
-            ))}
-            <span className="chat-dock-chip-label">Help</span>
-            {HELP_CHIPS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className="chat-dock-chip"
-                disabled={busy}
-                onClick={() => void send(c)}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
 
           <div className="chat-dock-messages">
             {messages.map((m, i) => {
@@ -293,6 +314,15 @@ export function ChatDock() {
                 if (match && recoIds.has(Number(match[1]))) return false
                 return isSafePath(link.path)
               })
+              const isLatestAssistant =
+                m.role === 'assistant' &&
+                !busy &&
+                i === messages.length - 1
+              const tips = isLatestAssistant
+                ? messages.length <= 1
+                  ? STARTER_SUGGESTIONS
+                  : followUpsFor(m.content, hasReco)
+                : []
 
               return (
                 <div
@@ -376,12 +406,45 @@ export function ChatDock() {
                       ))}
                     </div>
                   ) : null}
+                  {tips.length > 0 ? (
+                    <div
+                      className="chat-dock-followups"
+                      aria-label="Suggested next questions"
+                    >
+                      <span className="chat-dock-followups-label">
+                        Suggested next
+                      </span>
+                      <div className="chat-dock-followups-row">
+                        {tips.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            className="chat-dock-chip"
+                            disabled={busy}
+                            onClick={() => {
+                              if (c === 'Open Job Placement') {
+                                go('/app/placement')
+                                return
+                              }
+                              void send(c)
+                            }}
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               )
             })}
             {busy ? (
               <div className="chat-dock-bubble chat-dock-assistant">
-                <div className="chat-dock-meta">Thinking…</div>
+                <div className="chat-dock-typing" aria-label="Advisor is typing">
+                  <span />
+                  <span />
+                  <span />
+                </div>
               </div>
             ) : null}
             <div ref={bottomRef} />
@@ -423,14 +486,19 @@ export function ChatDock() {
       <button
         ref={toggleRef}
         type="button"
-        className="chat-dock-toggle btn btn-primary"
+        className={`chat-dock-toggle${open ? ' is-open' : ''}`}
         aria-expanded={open}
         aria-label={open ? 'Close advisor chat' : 'Open advisor chat'}
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? <X size={18} /> : <MessageCircle size={18} />}
-        <span>{open ? 'Close' : 'Advisor'}</span>
+        <span className="chat-dock-toggle-icon" aria-hidden>
+          {open ? <X size={17} strokeWidth={2.25} /> : <MessageCircle size={17} strokeWidth={2.25} />}
+        </span>
+        <span className="chat-dock-toggle-label">
+          {open ? 'Close' : 'Advisor'}
+        </span>
       </button>
     </div>
   )
 }
+
