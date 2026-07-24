@@ -180,8 +180,8 @@ export function NodePage() {
 
         {data ? (
           <motion.div
-            className="kpi-grid"
-            style={{ marginBottom: 0, gridTemplateColumns: '1fr 1fr' }}
+            className="kpi-grid grid-2"
+            style={{ marginBottom: 0 }}
             variants={staggerContainer}
             initial="initial"
             animate="animate"
@@ -230,11 +230,9 @@ export function NodePage() {
             <div className="panel-inner-core">
               <div className="panel-header">
                 <div>
-                  <h2>AI brief</h2>
+                  <h2>System Summary</h2>
                   <p className="panel-sub">
-                    {brief.llm_used ? 'Groq rewrite' : 'Template'} ·{' '}
-                    {brief.embedding_used ? 'HF neighbors' : 'sklearn neighbors'}
-                    {data.model_version ? ` · AI Engine version: ${data.model_version}` : ''}
+                    {data.model_version ? `Powered by AI Engine ${data.model_version}` : 'Automated Analysis'}
                   </p>
                 </div>
               </div>
@@ -248,16 +246,16 @@ export function NodePage() {
               </div>
               {brief.neighbors.length ? (
                 <p className="caption" style={{ marginBottom: 0 }}>
-                  Similar failed nodes:{' '}
+                  Similar machines failed recently:{' '}
                   {brief.neighbors
                     .map(
                       (n) =>
-                        `${n.node_id} (risk ${n.risk_score}%, fail ${(n.historical_failure_rate * 100).toFixed(0)}%)`,
+                        `Node ${n.node_id} (${(n.historical_failure_rate * 100).toFixed(0)}% failure history)`,
                     )
                     .join(' · ')}
                 </p>
               ) : null}
-              <p className="caption">{brief.caveat}</p>
+              {/* <p className="caption">{brief.caveat}</p> */}
             </div>
           </div>
         </Reveal>
@@ -266,7 +264,7 @@ export function NodePage() {
           <div className="panel-inner-core">
             <div className="panel-header">
               <div>
-                <h2>AI brief</h2>
+                <h2>System Summary</h2>
                 <p className="panel-sub">Loading grounded brief…</p>
               </div>
             </div>

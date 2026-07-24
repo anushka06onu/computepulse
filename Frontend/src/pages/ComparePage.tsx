@@ -74,15 +74,36 @@ export function ComparePage() {
             <div className="panel-header">
               <div>
                 <h2>Select nodes</h2>
-                <p className="panel-sub">
-                  Selected: {selected.length ? selected.join(', ') : 'none'} (max 3)
-                </p>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}>
+                  <div className="field" style={{ margin: 0, flex: 1 }}>
+                    <input
+                      type="text"
+                      placeholder="Enter node IDs (e.g., 101, 102)"
+                      value={selected.join(', ')}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          setSelected([]);
+                          return;
+                        }
+                        const parts = val.split(',')
+                          .map(s => parseInt(s.trim(), 10))
+                          .filter(n => !isNaN(n));
+                        setSelected(parts.slice(0, 3));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && selected.length >= 2) runCompare();
+                      }}
+                      style={{ width: '100%', maxWidth: '300px' }}
+                    />
+                  </div>
+                  {selected.length > 0 && (
+                    <button className="btn btn-ghost btn-sm" onClick={() => setSelected([])}>
+                      Clear
+                    </button>
+                  )}
+                </div>
               </div>
-              {selected.length ? (
-                <button className="btn btn-ghost btn-sm" onClick={() => setSelected([])}>
-                  Clear
-                </button>
-              ) : null}
             </div>
             <div className="node-pick-grid">
               {ids.map((id) => (

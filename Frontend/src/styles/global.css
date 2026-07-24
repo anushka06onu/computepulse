@@ -292,7 +292,7 @@ select:focus-visible {
 }
 
 .app-topbar-brand-name {
-  color: #ffffff !important;
+  color: var(--ink);
 }
 
 .app-topbar-brand-name span {

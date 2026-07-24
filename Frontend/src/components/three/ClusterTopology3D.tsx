@@ -126,18 +126,6 @@ export function ClusterTopology3D({
           autoRotateSpeed={0.35}
         />
       </Canvas>
-      {active ? (
-        <div className="map-3d-hud">
-          <strong>Node {active.id}</strong>
-          <span>Fused {Number(active.meta?.fused ?? active.risk).toFixed(1)}%</span>
-          <span>{String(active.meta?.health ?? '')}</span>
-          <em>Click to inspect</em>
-        </div>
-      ) : (
-        <div className="map-3d-hud muted">
-          Drag to orbit · height = fused risk · click a node
-        </div>
-      )}
     </div>
   )
 }

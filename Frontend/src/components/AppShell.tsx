@@ -242,7 +242,7 @@ export function AppShell() {
             </div>
           ) : null}
           <p className="nav-hint">
-            Press ⌘K to jump anywhere. Scenario #{seed}.
+            Press ⌘K to jump anywhere.
           </p>
         </div>
       </aside>
@@ -288,10 +288,10 @@ export function AppShell() {
             <div className="app-topbar-meta">
               <span className="meta-pill">
                 <span className="dot" />
-                Historical resample
+                Live Demo Data
               </span>
               <span className="meta-pill meta-pill-hide-sm">
-                Alibaba GPU trace · 2020
+                Sample GPU Server Fleet
               </span>
             </div>
           </div>

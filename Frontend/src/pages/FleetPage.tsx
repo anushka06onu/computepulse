@@ -162,10 +162,9 @@ export function FleetPage() {
               <div className="gauge-copy">
                 <h2>Fleet health score</h2>
                 <p className="panel-sub">
-                  100 − mean fused risk (0.75·risk + 0.25·anomaly) across{' '}
-                  {data.summary.total_machines.toLocaleString()} machines.
+                  Real-time average system health across {data.summary.total_machines.toLocaleString()} machines.
                   {data.summary.model_version
-                    ? ` · AI Engine version: ${data.summary.model_version}`
+                    ? ` · Powered by AI Engine`
                     : ''}
                 </p>
                 {data.drift?.high && data.drift.message ? (

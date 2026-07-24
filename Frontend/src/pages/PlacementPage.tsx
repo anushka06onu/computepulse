@@ -41,13 +41,13 @@ export function PlacementPage() {
           </div>
           <h1>Smart Job Placement</h1>
           <p>
-            Policy <strong style={{ color: 'var(--ink)' }}>{data.policy ?? 'risk_anomaly_v2'}</strong>{' '}
-            ranks by fused risk + anomaly + history. AI Prediction↔Fail correlation{' '}
+            System <strong style={{ color: 'var(--ink)' }}>AI Placement Engine</strong>{' '}
+            optimizes node selection based on historical reliability. Prediction Confidence{' '}
             <strong style={{ color: 'var(--ink)' }}>
               r = {data.correlation.toFixed(3)}
             </strong>
             {data.lift
-              ? ` · offline lift ${(data.lift.relative_reduction_vs_risk_only * 100).toFixed(1)}% vs risk-only`
+              ? ` · Estimated improvement: ${(data.lift.relative_reduction_vs_risk_only * 100).toFixed(1)}% fewer failures`
               : ''}
             .
           </p>
@@ -111,7 +111,7 @@ export function PlacementPage() {
                   Node {data.avoid[0].node_id}
                 </Link>
                 <span className="action-node-risk critical">
-                  fused {data.avoid[0].fused_risk?.toFixed(1) ?? data.avoid[0].risk_score}%
+                  risk {data.avoid[0].risk_score?.toFixed(1)}%
                 </span>
               </div>
               <motion.div
@@ -121,6 +121,8 @@ export function PlacementPage() {
                   typeof window !== 'undefined' &&
                   window.matchMedia('(prefers-reduced-motion: reduce)').matches
                     ? undefined
+                    : typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
+                    ? { y: [0, 6, 0] }
                     : { x: [0, 6, 0] }
                 }
                 transition={{

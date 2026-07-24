@@ -625,3 +625,4 @@ export function FleetRiskLandscape({ reduced = false }: { reduced?: boolean }) {
     </div>
   )
 }
+

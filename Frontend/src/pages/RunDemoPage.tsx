@@ -360,21 +360,19 @@ export function RunDemoPage() {
                   </div>
                   <div className="demo-savings-body">
                     <span className="demo-savings-label">
-                      Est. cost avoided by early prediction
+                      Estimated savings from AI prediction
                     </span>
                     <strong className="demo-savings-value">
                       <CountUp end={Math.round(savings.estimated_usd)} prefix="$" />
                     </strong>
                     <span className="demo-savings-meta">
-                      −{savings.risk_reduction_pp.toFixed(1)} pp failure risk ·{' '}
-                      {(savings.probability_avoided * 100).toFixed(0)}% ΔP(fail) ×
-                      job cost
+                      Based on {(savings.probability_avoided * 100).toFixed(0)}% lower failure risk vs job cost
                     </span>
                   </div>
                 </div>
               ) : null}
 
-              <p className="demo-caveat">{data.caveat}</p>
+              <p className="demo-caveat">Projected workload health after moving off the critical server to a safer machine.</p>
             </motion.div>
           ) : null}
         </AnimatePresence>

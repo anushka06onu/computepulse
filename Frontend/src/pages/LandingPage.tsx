@@ -176,7 +176,7 @@ export function LandingPage() {
             }
           >
             Predict GPU cluster failures before they interrupt your jobs —
-            trained on real Alibaba production traces.
+            trained on real production data.
           </motion.p>
           <motion.div
             className="cta-row"
@@ -617,6 +617,7 @@ function ProofStat({
     </div>
   )
 }
+
 
 
 

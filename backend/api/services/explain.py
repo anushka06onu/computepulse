@@ -47,7 +47,7 @@ def template_summary(
 ) -> str:
     drivers = ", ".join(reasons[:3]) if reasons else "overall elevated risk"
     return (
-        f"Node {node_id} is {health} (fused risk {fused:.1f}%). "
+        f"Node {node_id} is {health} (risk score {fused:.1f}%). "
         f"Main drivers: {drivers}."
     )
 

@@ -68,7 +68,7 @@ def _node_alert(
     health = store.status_code(fused, critical, watch)
     if light:
         reasons: list[str] = []
-        summary = f"Node {nid} is {health} (fused risk {fused:.1f}%)."
+        summary = f"Node {nid} is {health} (risk score {fused:.1f}%)."
     else:
         fail = store.hist_fail_rate(nid)
         reasons = store.shap_reasons(row, failure_rate=fail)
@@ -302,10 +302,10 @@ def scan_warnings(
                     "title": f"Node {nid}: investigate before reclaim",
                     "summary": (
                         f"Node {nid} looks underutilized (${savings:.0f} est.) but "
-                        f"fused risk {fused:.1f}% ≥ watch {watch:.0f}% — "
+                        f"risk score {fused:.1f}% ≥ watch {watch:.0f}% — "
                         f"policy safe_reclaim_v1 says investigate, not reclaim."
                     ),
-                    "reasons": ["High fused risk on idle-looking node"],
+                    "reasons": ["High risk score on idle-looking node"],
                     "neighbors": [],
                     "recommendation": {
                         "kind": "investigate",
