@@ -420,12 +420,41 @@ const BASE = (
   ''
 ).replace(/\/$/, '')
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`)
-  if (!res.ok) {
-    throw new Error(await readApiError(res))
+const requestCache = new Map<string, Promise<unknown>>()
+
+async function readApiError(res: Response): Promise<string> {
+  const detail = await res.text()
+  if (!detail) return res.statusText || `HTTP ${res.status}`
+  try {
+    const parsed = JSON.parse(detail) as { detail?: unknown }
+    if (typeof parsed.detail === 'string') return parsed.detail
+  } catch {
+    /* plain text */
   }
-  return res.json() as Promise<T>
+  return detail
+}
+
+async function get<T>(path: string, noCache = false): Promise<T> {
+  if (!noCache && requestCache.has(path)) {
+    return requestCache.get(path) as Promise<T>
+  }
+
+  const promise = fetch(`${BASE}${path}`)
+    .then(async (res) => {
+      if (!res.ok) {
+        throw new Error(await readApiError(res))
+      }
+      return res.json() as Promise<T>
+    })
+    .catch((err) => {
+      requestCache.delete(path)
+      throw err
+    })
+
+  if (!noCache) {
+    requestCache.set(path, promise)
+  }
+  return promise
 }
 
 async function post<T>(path: string, body?: unknown): Promise<T> {
@@ -440,20 +469,8 @@ async function post<T>(path: string, body?: unknown): Promise<T> {
   return res.json() as Promise<T>
 }
 
-async function readApiError(res: Response): Promise<string> {
-  const detail = await res.text()
-  if (!detail) return res.statusText || `HTTP ${res.status}`
-  try {
-    const parsed = JSON.parse(detail) as { detail?: unknown }
-    if (typeof parsed.detail === 'string') return parsed.detail
-  } catch {
-    /* plain text */
-  }
-  return detail
-}
-
 export const api = {
-  health: () => get<HealthResponse>('/api/health'),
+  health: () => get<HealthResponse>('/api/health', true),
   fleet: (seed?: number, critical = 70, watch = 40) =>
     get<FleetSnapshot>(
       `/api/fleet/snapshot?critical=${critical}&watch=${watch}${seed != null ? `&seed=${seed}` : ''}`,
@@ -566,6 +583,7 @@ export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   a.click()
   URL.revokeObjectURL(url)
 }
+
 
 
 
