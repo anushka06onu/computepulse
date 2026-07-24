@@ -17,6 +17,7 @@ import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { api, type ExplainResponse, type NodeDetail } from '../api/client'
 import { useApp } from '../context/AppContext'
+import { PageError } from '../components/PageError'
 import { KPI } from '../components/KPI'
 import { Reveal } from '../components/Reveal'
 import { ChartTooltip } from '../components/ChartTooltip'
@@ -30,6 +31,7 @@ export function NodePage() {
   const [data, setData] = useState<NodeDetail | null>(null)
   const [brief, setBrief] = useState<ExplainResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const [query, setQuery] = useState('')
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export function NodePage() {
         }
       })
       .catch((e: Error) => setError(e.message))
-  }, [seed, health?.ready, nodeId, navigate])
+  }, [seed, health?.ready, nodeId, navigate, reloadKey])
 
   useEffect(() => {
     if (!nodeId || health?.ready === false) return
@@ -81,7 +83,7 @@ export function NodePage() {
       cancelled = true
       window.clearTimeout(t)
     }
-  }, [nodeId, seed, critical, watch, health?.ready])
+  }, [nodeId, seed, critical, watch, health?.ready, reloadKey])
 
   const filteredIds = useMemo(() => {
     if (!query.trim()) return ids.slice(0, 200)
@@ -121,7 +123,18 @@ export function NodePage() {
     return [...data.shap].sort((a, b) => a.impact - b.impact)
   }, [data])
 
-  if (error) return <p className="banner">{error}</p>
+  if (error) {
+    return (
+      <PageError
+        title="Node Explorer"
+        message={error}
+        onRetry={() => {
+          setError(null)
+          setReloadKey((k) => k + 1)
+        }}
+      />
+    )
+  }
 
   return (
     <div>
@@ -132,8 +145,7 @@ export function NodePage() {
           </div>
           <h1>Node Explorer</h1>
           <p>
-            Inspect a real machine: snapshot metrics, failure history, and local
-            history, and local AI explanation.
+            Inspect a real machine: snapshot metrics, failure history, and a local AI explanation.
           </p>
         </div>
       </div>
@@ -311,7 +323,7 @@ export function NodePage() {
                   <div className="panel-header">
                     <div>
                       <h2>Why this risk?</h2>
-                      <p className="panel-sub">Why the AI thinks this</p>
+                      <p className="panel-sub">Top SHAP drivers for this risk score</p>
                     </div>
                   </div>
                   <div style={{ width: '100%', height: 320 }}>
