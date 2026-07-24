@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from api.routers import demo, explain, fleet, metrics, nodes, optimize, placement, warnings
+from api.routers import chat, demo, explain, fleet, metrics, nodes, optimize, placement, warnings
 from api.services.store import health_status
 
 try:
@@ -60,6 +60,7 @@ app.include_router(metrics.router)
 app.include_router(demo.router)
 app.include_router(explain.router)
 app.include_router(warnings.router)
+app.include_router(chat.router)
 
 
 @app.get("/api/health")
@@ -92,3 +93,4 @@ if os.path.exists(static_dir):
         if os.path.exists(index_file):
             return FileResponse(index_file)
         return {"error": "Frontend build index.html not found"}
+

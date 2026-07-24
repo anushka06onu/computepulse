@@ -22,6 +22,7 @@ import { ReadinessBanner } from './ReadinessBanner'
 import { pageVariants } from '../motion/presets'
 import { ThemeToggle } from './ThemeToggle'
 import { api } from '../api/client'
+import { ChatDock } from './ChatDock'
 
 const CommandPalette = lazy(() =>
   import('./CommandPalette').then((m) => ({ default: m.CommandPalette })),
@@ -50,7 +51,7 @@ export function AppShell() {
     setWatch,
     tourDone,
     seed,
-    requestDemoRun,
+    placeNextJob,
     reloadHealth,
   } = useApp()
   const [busy, setBusy] = useState(false)
@@ -301,7 +302,7 @@ export function AppShell() {
               id="run-demo-btn"
               onClick={() => {
                 if (location.pathname === '/app/demo') {
-                  void requestDemoRun()
+                  void placeNextJob()
                 } else {
                   navigate('/app/demo')
                 }
@@ -339,9 +340,12 @@ export function AppShell() {
         <CommandPalette />
         {!tourDone ? <OnboardingTour /> : null}
       </Suspense>
+      <ChatDock />
     </div>
   )
 }
+
+
 
 
 

@@ -147,6 +147,7 @@ export interface DemoCandidate {
   }
   meets_requirements?: boolean
   selected: boolean
+  reserved?: boolean
 }
 
 export interface DemoCostSavings {
@@ -158,6 +159,14 @@ export interface DemoCostSavings {
   assumed_incident_overhead_usd: number
   formula: string
   caveat: string
+}
+
+export interface DemoReservation {
+  node_id: number
+  cpu_delta: number
+  gpu_delta: number
+  mem_delta: number
+  job_id: number
 }
 
 export interface DemoScenario {
@@ -211,6 +220,52 @@ export interface DemoScenario {
   }
   critical_threshold?: number
   source?: string
+  session_note?: string | null
+  constrained?: boolean
+  reservations_applied?: number
+}
+
+export interface DemoPlacement extends DemoScenario {
+  placed_at: number
+  session_index: number
+}
+
+export interface DemoQueueItem {
+  rank: number
+  job_preview?: { id: number; label: string }
+}
+
+export interface ChatLink {
+  label: string
+  path: string
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export interface ChatResponse {
+  reply: string
+  intent: string
+  node_id: number | null
+  health: string | null
+  links: ChatLink[]
+  recommendation: {
+    target_node_ids: number[]
+    why: string
+    candidates?: Array<{
+      node_id: number
+      placement_score: number
+      fused_risk: number
+      why: string
+    }>
+  } | null
+  sources: string[]
+  providers: { llm: string | null; embeddings: string | null }
+  llm_used: boolean
+  caveat: string
+  context_error?: string | null
 }
 
 export interface PlacementRow {
@@ -398,24 +453,37 @@ const BASE = (
   ''
 ).replace(/\/$/, '')
 
-const requestCache = new Map<string, Promise<any>>()
+const requestCache = new Map<string, Promise<unknown>>()
+
+async function readApiError(res: Response): Promise<string> {
+  const detail = await res.text()
+  if (!detail) return res.statusText || `HTTP ${res.status}`
+  try {
+    const parsed = JSON.parse(detail) as { detail?: unknown }
+    if (typeof parsed.detail === 'string') return parsed.detail
+  } catch {
+    /* plain text */
+  }
+  return detail
+}
 
 async function get<T>(path: string, noCache = false): Promise<T> {
   if (!noCache && requestCache.has(path)) {
     return requestCache.get(path) as Promise<T>
   }
-  
-  const promise = fetch(`${BASE}${path}`).then(async (res) => {
-    if (!res.ok) {
-      const detail = await res.text()
-      throw new Error(detail || res.statusText)
-    }
-    return res.json() as Promise<T>
-  }).catch((err) => {
-    requestCache.delete(path)
-    throw err
-  })
-  
+
+  const promise = fetch(`${BASE}${path}`)
+    .then(async (res) => {
+      if (!res.ok) {
+        throw new Error(await readApiError(res))
+      }
+      return res.json() as Promise<T>
+    })
+    .catch((err) => {
+      requestCache.delete(path)
+      throw err
+    })
+
   if (!noCache) {
     requestCache.set(path, promise)
   }
@@ -429,8 +497,7 @@ async function post<T>(path: string, body?: unknown): Promise<T> {
     body: body ? JSON.stringify(body) : undefined,
   })
   if (!res.ok) {
-    const detail = await res.text()
-    throw new Error(detail || res.statusText)
+    throw new Error(await readApiError(res))
   }
   return res.json() as Promise<T>
 }
@@ -479,6 +546,38 @@ export const api = {
         seed != null ? `&seed=${seed}` : ''
       }`,
     ),
+  demoPlace: (body: {
+    seed?: number
+    critical?: number
+    watch?: number
+    rank?: number
+    reservations?: DemoReservation[]
+    session_index?: number
+  }) => post<DemoScenario>('/api/demo/session/place', body),
+  demoPlaceBatch: (body: {
+    seed?: number
+    critical?: number
+    watch?: number
+    ranks: number[]
+    reservations?: DemoReservation[]
+    session_index_start?: number
+  }) =>
+    post<{
+      seed: number
+      placements: DemoScenario[]
+      reservations: DemoReservation[]
+      placed_count: number
+      requested_count: number
+      stopped_reason: string | null
+    }>('/api/demo/session/place-batch', body),
+  chat: (body: {
+    message: string
+    history?: ChatMessage[]
+    seed?: number
+    critical?: number
+    watch?: number
+    node_id?: number | null
+  }) => post<ChatResponse>('/api/chat', body),
   explain: (nodeId: number, seed?: number, critical = 70, watch = 40) =>
     post<ExplainResponse>('/api/explain', {
       node_id: nodeId,
@@ -525,5 +624,7 @@ export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   a.click()
   URL.revokeObjectURL(url)
 }
+
+
 
 
