@@ -299,7 +299,7 @@ export function RunDemoPage() {
         <div>
           <div className="page-eyebrow">
             <Play size={12} /> Placement session · Warnings critical #
-            {rankLabel}/{poolLabel} · seed {data.seed}
+            {rankLabel}/{poolLabel}
           </div>
           <h1>Run Demo</h1>
           <p>

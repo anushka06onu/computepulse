@@ -48,7 +48,16 @@ ComputePulse operates through three integrated AI modules on a shared feature pi
 - **Output:** Identifies underutilized GPUs and estimates exact cost savings (assuming an industry average of $2.50/GPU-hour).
 - **Benefit:** Enables proactive cost optimization, potentially saving organizations hundreds of thousands of dollars monthly.
 
-**Unified Health Score:** All three outputs feed into a single Health Score (0–100%) per node:
+### Interactive Operator Agent (Chatbot)
+- **Technology:** Groq LLM (Llama-3.1-8b) with RAG using Hugging Face embeddings.
+- **Function:** Understands natural language requests (e.g., "which machines are risky?", "move job 452 to a safe node").
+- **Benefit:** Allows operations teams to diagnose failures and execute workload migrations instantly using conversational AI.
+
+### Live Simulation (Run Demo)
+- **Function:** A fully interactive step-by-step simulation to demonstrate how ComputePulse proactively handles scheduling.
+- **Benefit:** Allows administrators to queue simulated AI training jobs and watch the placement engine dynamically select the safest and most underutilized nodes.
+
+**Unified Health Score:** All outputs feed into a single Health Score (0–100%) per node:
 *Health Score = 50% (Failure Prevention) + 30% (Load Balance) + 20% (Efficiency)*
 
 ---
@@ -100,7 +109,7 @@ Trained on 796,582 real instances from Alibaba's PAI GPU cluster (~6,500 GPUs, ~
 | `backend/model3_optimization.py` | Module 3: Underutilized machine detection and savings estimation. |
 | `backend/api/main.py` | FastAPI server exposing endpoints for the dashboard. |
 | `/Frontend/` | Contains the React/Vite interactive dashboard application. |
-| `Frontend/src/pages/` | Code for the 5 interactive tabs (Fleet, Cluster Map, Warnings, Node Explorer, Evidence). |
+| `Frontend/src/pages/` | Code for the interactive tabs (Fleet, Cluster Map, Warnings, Node Explorer, Evidence, Run Demo). |
 
 ---
 
