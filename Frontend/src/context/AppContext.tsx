@@ -261,14 +261,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const h = await api.health()
       setHealth(h)
-    } catch {
+    } catch (e: unknown) {
       setHealth({
         ready: false,
         missing: [
           {
-            file: 'api',
-            command: 'cd backend && uvicorn api.main:app --reload',
+            file: 'Error',
+            command: e instanceof Error ? e.message : String(e),
           },
+          {
+            file: 'VITE_API_BASE',
+            command: (import.meta.env.VITE_API_BASE as string) || 'UNDEFINED',
+          },
+          {
+            file: 'URL',
+            command: window.location.href,
+          }
         ],
         root: '',
       })
