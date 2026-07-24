@@ -40,7 +40,7 @@ _extra = [
 ]
 _allow_origins = _default_origins + _extra
 # Render / production: set FRONTEND_ORIGINS=https://your-frontend.vercel.app
-if os.getenv("CORS_ALLOW_ALL", "").lower() in {"1", "true", "yes"}:
+if os.getenv("CORS_ALLOW_ALL", "true").lower() in {"1", "true", "yes"}:
     _allow_origins = ["*"]
 
 app.add_middleware(
