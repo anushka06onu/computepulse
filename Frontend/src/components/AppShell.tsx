@@ -110,6 +110,23 @@ export function AppShell() {
         onClick={() => setNavOpen(false)}
       />
 
+      <button
+        type="button"
+        className="nav-toggle nav-toggle-side btn btn-ghost btn-sm"
+        aria-label={desktopNavCollapsed ? 'Open menu' : 'Close menu'}
+        aria-expanded={!desktopNavCollapsed}
+        aria-controls="app-nav"
+        onClick={() => setDesktopNavCollapsed(!desktopNavCollapsed)}
+      >
+        <motion.div
+          animate={desktopNavCollapsed ? { rotate: 0 } : { rotate: 90 }}
+          transition={{ duration: 0.2 }}
+          style={{ display: 'flex' }}
+        >
+          <Menu size={18} />
+        </motion.div>
+      </button>
+
       <aside className="app-nav" id="app-nav">
         <div className="nav-drawer-head">
           <div className="brand" onClick={() => navigate('/')}>
@@ -252,7 +269,7 @@ export function AppShell() {
           <div className="app-topbar-left">
             <button
               type="button"
-              className="nav-toggle btn btn-ghost btn-sm"
+              className="nav-toggle nav-toggle-topbar btn btn-ghost btn-sm"
               aria-label="Open menu"
               aria-expanded={navOpen}
               aria-controls="app-nav"
@@ -342,5 +359,6 @@ export function AppShell() {
     </div>
   )
 }
+
 
 
