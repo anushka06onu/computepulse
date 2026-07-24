@@ -398,13 +398,28 @@ const BASE = (
   ''
 ).replace(/\/$/, '')
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`)
-  if (!res.ok) {
-    const detail = await res.text()
-    throw new Error(detail || res.statusText)
+const requestCache = new Map<string, Promise<any>>()
+
+async function get<T>(path: string, noCache = false): Promise<T> {
+  if (!noCache && requestCache.has(path)) {
+    return requestCache.get(path) as Promise<T>
   }
-  return res.json() as Promise<T>
+  
+  const promise = fetch(`${BASE}${path}`).then(async (res) => {
+    if (!res.ok) {
+      const detail = await res.text()
+      throw new Error(detail || res.statusText)
+    }
+    return res.json() as Promise<T>
+  }).catch((err) => {
+    requestCache.delete(path)
+    throw err
+  })
+  
+  if (!noCache) {
+    requestCache.set(path, promise)
+  }
+  return promise
 }
 
 async function post<T>(path: string, body?: unknown): Promise<T> {
@@ -421,7 +436,7 @@ async function post<T>(path: string, body?: unknown): Promise<T> {
 }
 
 export const api = {
-  health: () => get<HealthResponse>('/api/health'),
+  health: () => get<HealthResponse>('/api/health', true),
   fleet: (seed?: number, critical = 70, watch = 40) =>
     get<FleetSnapshot>(
       `/api/fleet/snapshot?critical=${critical}&watch=${watch}${seed != null ? `&seed=${seed}` : ''}`,
