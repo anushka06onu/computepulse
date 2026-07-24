@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { api, downloadCsv, type FleetNode, type FleetSnapshot } from '../api/client'
 import { useApp } from '../context/AppContext'
+import { PageError } from '../components/PageError'
 import { KPI, CountUp } from '../components/KPI'
 import { DataTable } from '../components/DataTable'
 import { StatusBadge } from '../components/StatusBadge'
@@ -52,6 +53,7 @@ export function FleetPage() {
   const { seed, critical, watch, health } = useApp()
   const [data, setData] = useState<FleetSnapshot | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const [filter, setFilter] = useState<
     'all' | 'critical' | 'watch' | 'healthy' | 'worst5'
   >('all')
@@ -71,7 +73,7 @@ export function FleetPage() {
     return () => {
       cancelled = true
     }
-  }, [seed, critical, watch, health?.ready])
+  }, [seed, critical, watch, health?.ready, reloadKey])
 
   const filtered = useMemo(() => {
     if (!data) return []
@@ -95,7 +97,18 @@ export function FleetPage() {
     return bins
   }, [data])
 
-  if (error) return <p className="banner">{error}</p>
+  if (error) {
+    return (
+      <PageError
+        title="Fleet Overview"
+        message={error}
+        onRetry={() => {
+          setError(null)
+          setReloadKey((k) => k + 1)
+        }}
+      />
+    )
+  }
   if (!data) {
     return (
       <div className="stack">
