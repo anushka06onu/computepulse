@@ -100,6 +100,40 @@ export interface NodeDetail {
   }>
 }
 
+export interface DemoJobRequirements {
+  max_fused_risk_pct: number
+  max_cpu_usage_pct: number
+  max_gpu_usage_pct: number
+  max_mem_pressure: number
+  max_anomaly_score: number
+}
+
+export interface DemoFitCheck {
+  key: string
+  label: string
+  required: string
+  actual: string
+  met: boolean
+  why: string
+}
+
+export interface DemoFit {
+  meets_all: boolean
+  met_count: number
+  total: number
+  summary: string
+  checks: DemoFitCheck[]
+}
+
+export interface DemoNodeMetrics {
+  cpu_usage_pct: number
+  gpu_usage_pct: number
+  mem_pressure: number
+  anomaly_score: number
+  fused_risk: number
+  risk_score: number
+}
+
 export interface DemoCandidate {
   rank: number
   node_id: number
@@ -111,6 +145,7 @@ export interface DemoCandidate {
     normality: number
     history: number
   }
+  meets_requirements?: boolean
   selected: boolean
 }
 
@@ -130,7 +165,15 @@ export interface DemoScenario {
   rank?: number
   pool_size?: number
   stable?: boolean
-  job: { id: number; label: string }
+  job: {
+    id: number
+    label: string
+    workload?: string
+    duration_hours?: number
+    gpu_count?: number
+    requirements?: DemoJobRequirements
+    locked?: boolean
+  }
   from: {
     node_id: number
     risk_score: number
@@ -139,6 +182,8 @@ export interface DemoScenario {
     placement_score?: number
     health: number
     reasons: string[]
+    metrics?: DemoNodeMetrics
+    fit?: DemoFit
   }
   to: {
     node_id: number
@@ -148,6 +193,8 @@ export interface DemoScenario {
     placement_score?: number
     health: number
     actual_failure_rate: number | null
+    metrics?: DemoNodeMetrics
+    fit?: DemoFit
   }
   candidates?: DemoCandidate[]
   cost_savings?: DemoCostSavings
@@ -158,6 +205,12 @@ export interface DemoScenario {
   model_version?: string
   caveat: string
   steps: string[]
+  fit_headline?: {
+    assign_fails: string[]
+    recommend_meets: string[]
+  }
+  critical_threshold?: number
+  source?: string
 }
 
 export interface PlacementRow {
@@ -457,4 +510,5 @@ export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   a.click()
   URL.revokeObjectURL(url)
 }
+
 

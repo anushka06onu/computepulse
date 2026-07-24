@@ -4,17 +4,21 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   AlertTriangle,
   ArrowRight,
+  Check,
   CheckCircle2,
+  ClipboardList,
   DollarSign,
   Play,
   RotateCcw,
   Search,
   SkipForward,
   Sparkles,
+  X,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { HealthGauge } from '../components/HealthGauge'
 import { CountUp } from '../components/KPI'
+import type { DemoFit } from '../api/client'
 
 const reduced =
   typeof window !== 'undefined' &&
@@ -22,6 +26,50 @@ const reduced =
 
 const STEP_MS = 2200
 const TOTAL = 6
+
+function FitPanel({
+  title,
+  subtitle,
+  fit,
+  tone,
+}: {
+  title: string
+  subtitle: string
+  fit: DemoFit
+  tone: 'critical' | 'healthy'
+}) {
+  return (
+    <div className={`demo-fit-panel demo-fit-panel-${tone}`}>
+      <div className="demo-fit-panel-head">
+        <strong>{title}</strong>
+        <span>{subtitle}</span>
+      </div>
+      <p className="demo-fit-summary">{fit.summary}</p>
+      <ul className="demo-fit-list">
+        {fit.checks.map((c) => (
+          <li
+            key={c.key}
+            className={c.met ? 'demo-fit-ok' : 'demo-fit-fail'}
+          >
+            <span className="demo-fit-icon" aria-hidden>
+              {c.met ? <Check size={14} strokeWidth={2.5} /> : <X size={14} strokeWidth={2.5} />}
+            </span>
+            <div className="demo-fit-copy">
+              <div className="demo-fit-row">
+                <em>{c.label}</em>
+                <span>
+                  {c.actual}
+                  <small> req {c.required}</small>
+                </span>
+              </div>
+              <p>{c.why}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 export function RunDemoPage() {
   const {
@@ -125,6 +173,9 @@ export function RunDemoPage() {
   const progress = useMemo(() => ((step + 1) / TOTAL) * 100, [step])
   const candidates = data?.candidates ?? []
   const savings = data?.cost_savings
+  const req = data?.job.requirements
+  const fromFit = data?.from.fit
+  const toFit = data?.to.fit
 
   if (error) return <p className="banner">{error}</p>
   if (loading || !data) return <div className="skeleton" style={{ height: 480 }} />
@@ -139,13 +190,14 @@ export function RunDemoPage() {
       <div className="page-header">
         <div>
           <div className="page-eyebrow">
-            <Play size={12} /> Guided demo · critical #{rankLabel}/{poolLabel} ·
-            seed {data.seed}
+            <Play size={12} /> Guided demo · Warnings critical #{rankLabel}/
+            {poolLabel} · seed {data.seed}
           </div>
           <h1>Run Demo</h1>
           <p>
-            Detects a high-risk machine, scores safer placement candidates, then
-            recommends the best target — with estimated cost avoided by acting early.
+            Cycles the same critical machines as Warnings. Each run loads a job
+            with requirements, shows why that critical node fails them, then
+            recommends a safer host that meets them.
           </p>
         </div>
         <div className="page-actions">
@@ -165,6 +217,56 @@ export function RunDemoPage() {
           </button>
         </div>
       </div>
+
+      {req ? (
+        <section className="demo-job" aria-label="Job requirements">
+          <div className="demo-job-head">
+            <div className="demo-job-icon">
+              <ClipboardList size={18} />
+            </div>
+            <div>
+              <p className="demo-job-kicker">
+                Incoming job · Warnings critical #{rankLabel}/{poolLabel}
+              </p>
+              <h2>{data.job.label}</h2>
+              <p>
+                {data.job.workload ?? 'GPU workload'}
+                {data.job.gpu_count != null ? ` · ${data.job.gpu_count} GPU` : ''}
+                {data.job.duration_hours != null
+                  ? ` · ~${data.job.duration_hours}h`
+                  : ''}
+              </p>
+            </div>
+          </div>
+          <div className="demo-job-reqs">
+            <div>
+              <span>Max failure risk</span>
+              <strong>≤ {req.max_fused_risk_pct}%</strong>
+            </div>
+            <div>
+              <span>Max CPU busy</span>
+              <strong>≤ {req.max_cpu_usage_pct}%</strong>
+            </div>
+            <div>
+              <span>Max GPU busy</span>
+              <strong>≤ {req.max_gpu_usage_pct}%</strong>
+            </div>
+            <div>
+              <span>Max mem pressure</span>
+              <strong>≤ {req.max_mem_pressure}</strong>
+            </div>
+            <div>
+              <span>Max anomaly</span>
+              <strong>≤ {req.max_anomaly_score}</strong>
+            </div>
+          </div>
+          <p className="demo-job-note">
+            Run Demo / Next critical loads a new job and requirements, then
+            shows why the critical node fails them and why the recommended
+            node meets them.
+          </p>
+        </section>
+      ) : null}
 
       <div className="demo-progress">
         <motion.div
@@ -306,6 +408,11 @@ export function RunDemoPage() {
                   <em className="critical">
                     {(data.from.fused_risk ?? data.from.risk_score).toFixed(1)}% fused
                   </em>
+                  {fromFit ? (
+                    <small className="demo-move-fit critical">
+                      {fromFit.met_count}/{fromFit.total} requirements met
+                    </small>
+                  ) : null}
                 </div>
                 <ArrowRight size={24} className="demo-move-arrow" />
                 <div className="demo-move-node to">
@@ -317,8 +424,30 @@ export function RunDemoPage() {
                       data.to.placement_score ?? 100 - data.to.risk_score
                     ).toFixed(1)}
                   </em>
+                  {toFit ? (
+                    <small className="demo-move-fit healthy">
+                      {toFit.met_count}/{toFit.total} requirements met
+                    </small>
+                  ) : null}
                 </div>
               </div>
+
+              {fromFit && toFit ? (
+                <div className="demo-fit-grid">
+                  <FitPanel
+                    title={`Why Node ${data.from.node_id} fails`}
+                    subtitle="Assigned critical machine"
+                    fit={fromFit}
+                    tone="critical"
+                  />
+                  <FitPanel
+                    title={`Why Node ${data.to.node_id} qualifies`}
+                    subtitle="Recommended placement"
+                    fit={toFit}
+                    tone="healthy"
+                  />
+                </div>
+              ) : null}
             </motion.div>
           ) : null}
         </AnimatePresence>
@@ -423,4 +552,5 @@ export function RunDemoPage() {
     </div>
   )
 }
+
 

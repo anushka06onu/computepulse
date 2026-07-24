@@ -345,3 +345,45 @@
 {"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784905842.932907}
 {"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784905843.20575}
 {"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784905843.4639628}
+{"event": "demo", "from": 1477, "to": 1292, "health_before": 6.0, "health_after": 95.6, "placement_delta": 81.7, "estimated_savings_usd": 815.4, "job_id": 5000, "seed": 0, "rank": 0, "ts": 1784909531.086161}
+{"event": "demo", "from": 1477, "to": 1292, "health_before": 6.0, "health_after": 95.6, "placement_delta": 81.7, "estimated_savings_usd": 815.4, "job_id": 5000, "seed": 0, "rank": 0, "ts": 1784909531.117193}
+{"event": "demo", "from": 659, "to": 1292, "health_before": 6.4, "health_after": 95.6, "placement_delta": 80.4, "estimated_savings_usd": 811.7, "job_id": 5000, "seed": 0, "rank": 1, "ts": 1784909707.0679228}
+{"event": "demo", "from": 1521, "to": 1292, "health_before": 6.9, "health_after": 95.6, "placement_delta": 83.2, "estimated_savings_usd": 807.2, "job_id": 5000, "seed": 0, "rank": 2, "ts": 1784909725.312938}
+{"event": "demo", "from": 1521, "to": 1292, "health_before": 6.9, "health_after": 95.6, "placement_delta": 83.2, "estimated_savings_usd": 807.2, "job_id": 5100, "seed": 0, "rank": 2, "ts": 1784909891.379741}
+{"event": "demo", "from": 1477, "to": 1292, "health_before": 6.0, "health_after": 95.6, "placement_delta": 81.7, "estimated_savings_usd": 815.4, "job_id": 5100, "seed": 0, "rank": 0, "ts": 1784909891.51365}
+{"event": "demo", "from": 187, "to": 1292, "health_before": 10.7, "health_after": 95.6, "placement_delta": 78.5, "estimated_savings_usd": 772.6, "job_id": 5100, "seed": 0, "rank": 3, "ts": 1784909954.539797}
+{"event": "demo", "from": 1563, "to": 1292, "health_before": 10.7, "health_after": 95.6, "placement_delta": 79.0, "estimated_savings_usd": 772.6, "job_id": 5100, "seed": 0, "rank": 4, "ts": 1784909958.778494}
+{"event": "demo", "from": 1481, "to": 1292, "health_before": 10.7, "health_after": 95.6, "placement_delta": 82.6, "estimated_savings_usd": 772.6, "job_id": 5100, "seed": 0, "rank": 5, "ts": 1784909975.403501}
+{"event": "demo", "from": 1391, "to": 1292, "health_before": 11.7, "health_after": 95.6, "placement_delta": 74.7, "estimated_savings_usd": 763.5, "job_id": 5100, "seed": 0, "rank": 6, "ts": 1784909976.870293}
+{"event": "demo", "from": 658, "to": 1292, "health_before": 13.5, "health_after": 95.6, "placement_delta": 73.6, "estimated_savings_usd": 747.1, "job_id": 5100, "seed": 0, "rank": 7, "ts": 1784909977.708677}
+{"event": "demo", "from": 658, "to": 70, "health_before": 13.5, "health_after": 96.3, "placement_delta": 73.8, "estimated_savings_usd": 753.5, "job_id": 5158, "seed": 0, "rank": 7, "ts": 1784910092.7273989}
+{"event": "demo", "from": 1477, "to": 1292, "health_before": 6.0, "health_after": 95.6, "placement_delta": 81.7, "estimated_savings_usd": 815.4, "job_id": 5100, "seed": 0, "rank": 0, "ts": 1784910093.9392798}
+{"event": "demo", "from": 659, "to": 70, "health_before": 6.4, "health_after": 96.3, "placement_delta": 80.6, "estimated_savings_usd": 818.1, "job_id": 5118, "seed": 0, "rank": 1, "ts": 1784910162.7786}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910193.450579}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910195.9872}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910198.839137}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910253.646881}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910256.121006}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910378.96103}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910381.28425}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910383.637727}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910539.794958}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910540.627886}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910542.183275}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910543.9139059}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910544.40062}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910546.4758668}
+{"event": "demo", "from": 658, "to": 70, "health_before": 13.5, "health_after": 96.3, "placement_delta": 73.8, "estimated_savings_usd": 753.5, "job_id": 5158, "seed": 0, "rank": 7, "critical": 70.0, "ts": 1784910548.282492}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910548.479464}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910549.615648}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784910552.002944}
+{"event": "demo", "from": 1391, "to": 730, "health_before": 10.7, "health_after": 94.4, "placement_delta": 79.7, "estimated_savings_usd": 761.7, "job_id": 5117, "seed": 1, "rank": 0, "critical": 70.0, "ts": 1784910557.643936}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784910567.195925}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784910568.959924}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784910571.4507258}
+{"event": "warning_scan", "seed": 1, "total": 41, "high": 25, "types": {"node_critical": 25, "node_watch": 15, "unsafe_reclaim": 1}, "ts": 1784910645.031308}
+{"event": "warning_open", "alert_id": "node_critical:1391:seed1", "type": "node_critical", "node_id": 1391, "seed": 1, "ts": 1784910647.764362}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 1, "top_pick": 355, "score": 97.32, "ts": 1784910650.27629}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 1, "top_pick": 355, "score": 97.32, "ts": 1784910650.283063}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 1, "top_pick": 355, "score": 97.32, "ts": 1784910650.446113}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 1, "top_pick": 355, "score": 97.32, "ts": 1784910650.452193}
