@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from api.routers import chat, demo, explain, fleet, metrics, nodes, optimize, placement, warnings
@@ -40,7 +40,8 @@ _extra = [
 ]
 _allow_origins = _default_origins + _extra
 # Render / production: set FRONTEND_ORIGINS=https://your-frontend.vercel.app
-if os.getenv("CORS_ALLOW_ALL", "true").lower() in {"1", "true", "yes"}:
+# Default closed; set CORS_ALLOW_ALL=true only for local throwaway demos.
+if os.getenv("CORS_ALLOW_ALL", "false").lower() in {"1", "true", "yes"}:
     _allow_origins = ["*"]
 
 app.add_middleware(
@@ -88,9 +89,12 @@ if os.path.exists(static_dir):
     @app.get("/{catchall:path}")
     def serve_frontend(catchall: str):
         if catchall.startswith("api"):
-            return {"detail": "Not Found"}
+            return JSONResponse({"detail": "Not Found"}, status_code=404)
         index_file = os.path.join(static_dir, "index.html")
         if os.path.exists(index_file):
             return FileResponse(index_file)
-        return {"error": "Frontend build index.html not found"}
+        return JSONResponse(
+            {"detail": "Frontend build index.html not found"}, status_code=404
+        )
+
 
