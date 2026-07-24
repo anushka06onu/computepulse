@@ -451,19 +451,48 @@ def counts_only(
     critical: float = 70,
     watch: float = 40,
 ) -> dict[str, Any]:
-    """Fast badge path — no SHAP, forecast, or explain."""
-    result = scan_warnings(
-        seed=seed,
-        critical=critical,
-        watch=watch,
-        explain_budget=0,
-        log_shadow=False,
-        include_forecast=False,
+    """Fast badge path — threshold counts on snapshot only (no alert build)."""
+    store.ensure_loaded()
+    use_seed = store.refresh_seed if seed is None else seed
+    snap = store.get_snapshot(use_seed)
+    fused = snap["fused_risk"].astype(float)
+    pct = snap["risk_percentile"].astype(float)
+    n_crit = int(((fused > critical).sum()))
+    n_watch = int(
+        (((fused > watch) & (fused <= critical) & (pct >= 90)).sum())
     )
+    n_crit = min(25, n_crit)
+    n_watch = min(15, n_watch)
+
+    by_type: dict[str, int] = {
+        "node_critical": n_crit,
+        "node_watch": n_watch,
+    }
+    high = n_crit
+    medium = n_watch
+    low = 0
+
+    drift = store.drift_psi(snap)
+    if drift.get("high"):
+        by_type["drift_high"] = 1
+        high += 1
+
+    ece = float((store.eval_report or {}).get("ece") or 0.0)
+    if ece >= ECE_WARN:
+        by_type["model_trust"] = 1
+        low += 1
+
+    counts = {
+        "total": high + medium + low,
+        "high": high,
+        "medium": medium,
+        "low": low,
+        "by_type": by_type,
+    }
     return {
-        "seed": result["seed"],
-        "counts": result["counts"],
-        "model_version": result["model_version"],
+        "seed": use_seed,
+        "counts": counts,
+        "model_version": store.model_version,
     }
 
 

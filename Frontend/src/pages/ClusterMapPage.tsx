@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Box, Grid3x3, LayoutGrid } from 'lucide-react'
 import { api, type FleetNode, type FleetSnapshot, type Health } from '../api/client'
 import { useApp } from '../context/AppContext'
+import { PageError } from '../components/PageError'
 import { pressDown, staggerContainer, staggerItem, tooltipEnter } from '../motion/presets'
 
 const ClusterTopology3D = lazy(() =>
@@ -47,6 +48,7 @@ export function ClusterMapPage() {
   const { seed, critical, watch, health } = useApp()
   const [data, setData] = useState<FleetSnapshot | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
   const [hover, setHover] = useState<{ node: FleetNode; x: number; y: number } | null>(
@@ -69,7 +71,9 @@ export function ClusterMapPage() {
     return () => {
       cancelled = true
     }
-  }, [seed, critical, watch, health?.ready])
+  }, [seed, critical, watch, health?.ready, reloadKey])
+
+  const MAP_2D_CAP = 500
 
   const cells = useMemo(() => {
     if (!data) return []
@@ -81,7 +85,18 @@ export function ClusterMapPage() {
       .sort((a, b) => a.node_id - b.node_id)
   }, [data, filter, query])
 
-  if (error) return <p className="banner">{error}</p>
+  if (error) {
+    return (
+      <PageError
+        title="Cluster Map"
+        message={error}
+        onRetry={() => {
+          setError(null)
+          setReloadKey((k) => k + 1)
+        }}
+      />
+    )
+  }
 
   return (
     <div>
@@ -146,7 +161,9 @@ export function ClusterMapPage() {
             <div>
               <h2>{view === '3d' ? 'Fleet topology' : 'Fleet heatmap'}</h2>
               <p className="panel-sub">
-                {cells.length.toLocaleString()} machines shown
+                {view === '2d' && cells.length > MAP_2D_CAP
+                  ? `Showing ${MAP_2D_CAP.toLocaleString()} of ${cells.length.toLocaleString()} machines — refine filters to go deeper`
+                  : `${cells.length.toLocaleString()} machines shown`}
               </p>
             </div>
             <div className="map-legend">
@@ -175,7 +192,7 @@ export function ClusterMapPage() {
               key={`${filter}-${query}`}
               onMouseLeave={() => setHover(null)}
             >
-              {cells.map((n, i) => (
+              {cells.slice(0, MAP_2D_CAP).map((n, i) => (
                 <motion.button
                   key={n.node_id}
                   className={`cluster-cell ${n.health}`}

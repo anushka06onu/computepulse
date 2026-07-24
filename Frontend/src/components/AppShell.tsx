@@ -15,14 +15,13 @@ import {
   Wallet,
   X,
 } from 'lucide-react'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useApp } from '../context/AppContext'
 import { ReadinessBanner } from './ReadinessBanner'
 import { pageVariants } from '../motion/presets'
 import { ThemeToggle } from './ThemeToggle'
-import { api } from '../api/client'
-import { ChatDock } from './ChatDock'
+import { api, clearRequestCache } from '../api/client'
 
 const CommandPalette = lazy(() =>
   import('./CommandPalette').then((m) => ({ default: m.CommandPalette })),
@@ -30,16 +29,19 @@ const CommandPalette = lazy(() =>
 const OnboardingTour = lazy(() =>
   import('./OnboardingTour').then((m) => ({ default: m.OnboardingTour })),
 )
+const ChatDock = lazy(() =>
+  import('./ChatDock').then((m) => ({ default: m.ChatDock })),
+)
 
 const links = [
-  { to: '/app/fleet', label: 'Fleet Overview', id: 'nav-fleet', icon: LayoutDashboard },
-  { to: '/app/warnings', label: 'Warnings', id: 'nav-warnings', icon: Bell },
-  { to: '/app/map', label: 'Cluster Map', id: 'nav-map', icon: Grid3x3 },
-  { to: '/app/nodes', label: 'Node Explorer', id: 'nav-nodes', icon: Search },
-  { to: '/app/placement', label: 'Job Placement', id: 'nav-placement', icon: Sparkles },
-  { to: '/app/optimize', label: 'Cost Optimization', id: 'nav-optimize', icon: Wallet },
-  { to: '/app/evidence', label: 'System Accuracy', id: 'nav-evidence', icon: BarChart3 },
-  { to: '/app/compare', label: 'Compare Nodes', id: 'nav-compare', icon: GitCompare },
+  { to: '/app/fleet', label: 'Fleet Overview', id: 'nav-fleet', icon: LayoutDashboard, prefetch: () => import('../pages/FleetPage') },
+  { to: '/app/warnings', label: 'Warnings', id: 'nav-warnings', icon: Bell, prefetch: () => import('../pages/WarningsPage') },
+  { to: '/app/map', label: 'Cluster Map', id: 'nav-map', icon: Grid3x3, prefetch: () => import('../pages/ClusterMapPage') },
+  { to: '/app/nodes', label: 'Node Explorer', id: 'nav-nodes', icon: Search, prefetch: () => import('../pages/NodePage') },
+  { to: '/app/placement', label: 'Job Placement', id: 'nav-placement', icon: Sparkles, prefetch: () => import('../pages/PlacementPage') },
+  { to: '/app/optimize', label: 'Cost Optimization', id: 'nav-optimize', icon: Wallet, prefetch: () => import('../pages/OptimizePage') },
+  { to: '/app/evidence', label: 'System Accuracy', id: 'nav-evidence', icon: BarChart3, prefetch: () => import('../pages/EvidencePage') },
+  { to: '/app/compare', label: 'Compare Nodes', id: 'nav-compare', icon: GitCompare, prefetch: () => import('../pages/ComparePage') },
 ]
 
 export function AppShell() {
@@ -59,27 +61,37 @@ export function AppShell() {
   const [warnCount, setWarnCount] = useState(0)
   const [navOpen, setNavOpen] = useState(false)
   const [desktopNavCollapsed, setDesktopNavCollapsed] = useState(false)
+  const [chatReady, setChatReady] = useState(false)
+  const [draftCritical, setDraftCritical] = useState(critical)
+  const [draftWatch, setDraftWatch] = useState(watch)
   const navigate = useNavigate()
   const location = useLocation()
+  const threshTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     void reloadHealth()
-    // Warm the default dashboard chunk while shell paints.
-    void import('../pages/FleetPage')
   }, [reloadHealth])
 
   useEffect(() => {
+    setDraftCritical(critical)
+    setDraftWatch(watch)
+  }, [critical, watch])
+
+  useEffect(() => {
     let cancelled = false
-    api
-      .warningsCounts(seed, critical, watch)
-      .then((d) => {
-        if (!cancelled) setWarnCount(d.counts.total)
-      })
-      .catch(() => {
-        if (!cancelled) setWarnCount(0)
-      })
+    const t = window.setTimeout(() => {
+      api
+        .warningsCounts(seed, critical, watch)
+        .then((d) => {
+          if (!cancelled) setWarnCount(d.counts.total)
+        })
+        .catch(() => {
+          if (!cancelled) setWarnCount(0)
+        })
+    }, 250)
     return () => {
       cancelled = true
+      window.clearTimeout(t)
     }
   }, [seed, critical, watch])
 
@@ -100,6 +112,30 @@ export function AppShell() {
       window.removeEventListener('keydown', onKey)
     }
   }, [navOpen])
+
+  useEffect(() => {
+    const ric = (window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void }).requestIdleCallback
+    const cic = (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback
+    if (typeof ric === 'function') {
+      const id = ric(() => setChatReady(true), { timeout: 2000 })
+      return () => {
+        if (typeof cic === 'function') cic(id)
+      }
+    }
+    const t = window.setTimeout(() => setChatReady(true), 800)
+    return () => window.clearTimeout(t)
+  }, [])
+
+  const scheduleThresholdCommit = (nextCritical: number, nextWatch: number) => {
+    setDraftCritical(nextCritical)
+    setDraftWatch(nextWatch)
+    if (threshTimer.current) clearTimeout(threshTimer.current)
+    threshTimer.current = setTimeout(() => {
+      clearRequestCache()
+      setCritical(nextCritical)
+      setWatch(nextWatch)
+    }, 250)
+  }
 
   return (
     <div className={`app-shell${navOpen ? ' nav-open' : ''}${desktopNavCollapsed ? ' desktop-nav-collapsed' : ''}`}>
@@ -146,6 +182,12 @@ export function AppShell() {
                   className={({ isActive }) =>
                     `nav-link${isActive ? ' active' : ''}`
                   }
+                  onMouseEnter={() => {
+                    void l.prefetch()
+                  }}
+                  onFocus={() => {
+                    void l.prefetch()
+                  }}
                 >
                   {isActiveRoute && (
                     <motion.div
@@ -221,23 +263,27 @@ export function AppShell() {
           {showThresh ? (
             <div className="thresh-panel">
               <label>
-                Critical above {critical}
+                Critical above {draftCritical}
                 <input
                   type="range"
                   min={50}
                   max={90}
-                  value={critical}
-                  onChange={(e) => setCritical(Number(e.target.value))}
+                  value={draftCritical}
+                  onChange={(e) =>
+                    scheduleThresholdCommit(Number(e.target.value), draftWatch)
+                  }
                 />
               </label>
               <label>
-                Watch above {watch}
+                Watch above {draftWatch}
                 <input
                   type="range"
                   min={20}
-                  max={critical - 1}
-                  value={watch}
-                  onChange={(e) => setWatch(Number(e.target.value))}
+                  max={Math.max(21, draftCritical - 1)}
+                  value={draftWatch}
+                  onChange={(e) =>
+                    scheduleThresholdCommit(draftCritical, Number(e.target.value))
+                  }
                 />
               </label>
             </div>
@@ -323,13 +369,12 @@ export function AppShell() {
         </div>
 
         <ReadinessBanner />
-        <AnimatePresence mode="wait">
+        <AnimatePresence initial={false}>
           <motion.div
             key={location.pathname}
             variants={pageVariants}
             initial="initial"
             animate="animate"
-            exit="exit"
             className="page-motion"
           >
             <Outlet />
@@ -339,13 +384,8 @@ export function AppShell() {
       <Suspense fallback={null}>
         <CommandPalette />
         {!tourDone ? <OnboardingTour /> : null}
+        {chatReady ? <ChatDock /> : null}
       </Suspense>
-      <ChatDock />
     </div>
   )
 }
-
-
-
-
-

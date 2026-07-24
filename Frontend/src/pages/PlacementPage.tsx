@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight, CheckCircle2, Download, Sparkles, XCircle } from 'lucide-react'
 import { api, downloadCsv, type PlacementResponse } from '../api/client'
 import { useApp } from '../context/AppContext'
+import { PageError } from '../components/PageError'
 import { Reveal } from '../components/Reveal'
 import { scaleIn } from '../motion/presets'
 
@@ -12,6 +13,7 @@ export function PlacementPage() {
   const [n, setN] = useState(5)
   const [data, setData] = useState<PlacementResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     if (health?.ready === false) return
@@ -27,9 +29,20 @@ export function PlacementPage() {
     return () => {
       cancelled = true
     }
-  }, [n, seed, health?.ready])
+  }, [n, seed, health?.ready, reloadKey])
 
-  if (error) return <p className="banner">{error}</p>
+  if (error) {
+    return (
+      <PageError
+        title="Job Placement"
+        message={error}
+        onRetry={() => {
+          setError(null)
+          setReloadKey((k) => k + 1)
+        }}
+      />
+    )
+  }
   if (!data) return <div className="skeleton" style={{ height: 240 }} />
 
   return (

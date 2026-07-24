@@ -14,20 +14,21 @@ def _f1(precision: float, recall: float) -> float:
 
 def _metric(primary: dict, key: str, *fallbacks: float) -> float:
     raw = primary.get(key)
-    try:
-        val = float(raw) if raw is not None else 0.0
-    except (TypeError, ValueError):
-        val = 0.0
-    if val and val == val:  # non-zero and not NaN
-        return val
+    if raw is not None:
+        try:
+            val = float(raw)
+            if val == val:  # not NaN — 0.0 is valid
+                return val
+        except (TypeError, ValueError):
+            pass
     for fb in fallbacks:
         try:
             fbv = float(fb)
         except (TypeError, ValueError):
             continue
-        if fbv and fbv == fbv:
+        if fbv == fbv:
             return fbv
-    return 0.0 if val != val else val
+    return 0.0
 
 
 @router.get("")

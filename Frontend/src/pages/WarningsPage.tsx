@@ -15,6 +15,7 @@ import {
   type WarningsResponse,
 } from '../api/client'
 import { useApp } from '../context/AppContext'
+import { PageError } from '../components/PageError'
 import { KPI, CountUp } from '../components/KPI'
 import { Reveal } from '../components/Reveal'
 import { slideInRight, staggerContainer, staggerItem } from '../motion/presets'
@@ -25,6 +26,7 @@ export function WarningsPage() {
   const { seed, critical, watch, health } = useApp()
   const [data, setData] = useState<WarningsResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const [filter, setFilter] = useState<Filter>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [detail, setDetail] = useState<WarningAlert | null>(null)
@@ -52,7 +54,7 @@ export function WarningsPage() {
   useEffect(() => {
     load(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seed, critical, watch, health?.ready])
+  }, [seed, critical, watch, health?.ready, reloadKey])
 
   useEffect(() => {
     if (!selectedId || health?.ready === false) return
@@ -74,7 +76,7 @@ export function WarningsPage() {
     return () => {
       cancelled = true
     }
-  }, [selectedId, seed, critical, watch, health?.ready, data])
+  }, [selectedId, seed, critical, watch, health?.ready, data, reloadKey])
 
   const filtered = useMemo(() => {
     if (!data) return []
@@ -88,7 +90,18 @@ export function WarningsPage() {
       ? (data.alerts.find((a) => a.id === selectedId) ?? null)
       : null)
 
-  if (error) return <p className="banner">{error}</p>
+  if (error) {
+    return (
+      <PageError
+        title="Warnings"
+        message={error}
+        onRetry={() => {
+          setError(null)
+          setReloadKey((k) => k + 1)
+        }}
+      />
+    )
+  }
   if (!data) {
     return (
       <div className="stack">

@@ -13,6 +13,7 @@ import {
 import { motion } from 'framer-motion'
 import { api, downloadCsv, type OptimizeResponse } from '../api/client'
 import { useApp } from '../context/AppContext'
+import { PageError } from '../components/PageError'
 import { KPI, CountUp } from '../components/KPI'
 import { Reveal } from '../components/Reveal'
 import { ChartTooltip } from '../components/ChartTooltip'
@@ -22,6 +23,7 @@ export function OptimizePage() {
   const { health, seed, watch } = useApp()
   const [data, setData] = useState<OptimizeResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     if (health?.ready === false) return
@@ -29,9 +31,20 @@ export function OptimizePage() {
       .optimize(seed, watch)
       .then(setData)
       .catch((e: Error) => setError(e.message))
-  }, [health?.ready, seed, watch])
+  }, [health?.ready, seed, watch, reloadKey])
 
-  if (error) return <p className="banner">{error}</p>
+  if (error) {
+    return (
+      <PageError
+        title="Cost Optimization"
+        message={error}
+        onRetry={() => {
+          setError(null)
+          setReloadKey((k) => k + 1)
+        }}
+      />
+    )
+  }
   if (!data) return <div className="skeleton" style={{ height: 240 }} />
 
   const chart = data.opportunities.slice(0, 15).map((o) => ({

@@ -427,27 +427,22 @@ def _scenario_for_seed(
         others.apply(lambda r: _row_meets_with_load(r, req, load_map), axis=1)
     ]
 
-    unconstrained = (
-        (eligible if len(eligible) else others)
-        .sort_values(["placement_score", "node_id"], ascending=[False, True])
-        .reset_index(drop=True)
-    )
-
-    free = unconstrained[~unconstrained["node_id"].isin(claimed_ids)]
+    eligible_free = eligible[~eligible["node_id"].isin(claimed_ids)]
     all_free = others[~others["node_id"].isin(claimed_ids)]
     constrained = False
     session_note: Optional[str] = None
 
     # Strict rule: one node → one session job. Never recommend a claimed host.
-    if len(free):
-        ranked = free.reset_index(drop=True)
+    # constrained=True when no free host fully meets requirements.
+    if len(eligible_free):
+        ranked = eligible_free.sort_values(
+            ["placement_score", "node_id"], ascending=[False, True]
+        ).reset_index(drop=True)
+        constrained = False
     elif len(all_free):
-        ranked = (
-            all_free.sort_values(
-                ["placement_score", "node_id"], ascending=[False, True]
-            )
-            .reset_index(drop=True)
-        )
+        ranked = all_free.sort_values(
+            ["placement_score", "node_id"], ascending=[False, True]
+        ).reset_index(drop=True)
         constrained = True
         session_note = (
             "No free host fully meets every requirement — placed on the best "

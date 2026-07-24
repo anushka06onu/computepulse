@@ -13,6 +13,7 @@ import { motion } from 'framer-motion'
 import { BarChart3 } from 'lucide-react'
 import { api, type MetricsResponse } from '../api/client'
 import { useApp } from '../context/AppContext'
+import { PageError } from '../components/PageError'
 import { KPI, CountUp } from '../components/KPI'
 import { Reveal } from '../components/Reveal'
 import { ChartTooltip } from '../components/ChartTooltip'
@@ -27,6 +28,7 @@ export function EvidencePage() {
   const { health } = useApp()
   const [data, setData] = useState<MetricsResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     if (health?.ready === false) return
@@ -34,7 +36,7 @@ export function EvidencePage() {
       .metrics()
       .then(setData)
       .catch((e: Error) => setError(e.message))
-  }, [health?.ready])
+  }, [health?.ready, reloadKey])
 
   const chartData = useMemo(() => {
     if (!data) return []
@@ -76,7 +78,18 @@ export function EvidencePage() {
     ]
   }, [data])
 
-  if (error) return <p className="banner">{error}</p>
+  if (error) {
+    return (
+      <PageError
+        title="System Accuracy"
+        message={error}
+        onRetry={() => {
+          setError(null)
+          setReloadKey((k) => k + 1)
+        }}
+      />
+    )
+  }
   if (!data) return <div className="skeleton" style={{ height: 240 }} />
 
   const baselineAcc = data.baseline.accuracy * 100
@@ -404,6 +417,7 @@ export function EvidencePage() {
     </div>
   )
 }
+
 
 
 

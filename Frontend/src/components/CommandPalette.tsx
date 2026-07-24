@@ -77,6 +77,9 @@ export function CommandPalette() {
         >
           <motion.div
             className="palette"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Command palette"
             onClick={(e) => e.stopPropagation()}
             variants={scaleIn}
             initial="hidden"
