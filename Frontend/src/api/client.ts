@@ -8,7 +8,7 @@ export interface MissingArtifact {
 export interface HealthResponse {
   ready: boolean
   missing: MissingArtifact[]
-  root: string
+  root?: string
 }
 
 export interface FleetNode {
@@ -19,6 +19,7 @@ export interface FleetNode {
   risk_percentile: number
   fleet_rank: number
   cpu_usage_pct: number
+  cpu_usage_raw?: number
   gpu_usage_pct: number
   mem_pressure: number
   duration_hours: number
@@ -453,7 +454,12 @@ const BASE = (
   ''
 ).replace(/\/$/, '')
 
-const requestCache = new Map<string, Promise<unknown>>()
+const requestCache = new Map<string, { promise: Promise<unknown>; at: number }>()
+const REQUEST_TTL_MS = 12_000
+
+export function clearRequestCache() {
+  requestCache.clear()
+}
 
 async function readApiError(res: Response): Promise<string> {
   const detail = await res.text()
@@ -468,8 +474,12 @@ async function readApiError(res: Response): Promise<string> {
 }
 
 async function get<T>(path: string, noCache = false): Promise<T> {
-  if (!noCache && requestCache.has(path)) {
-    return requestCache.get(path) as Promise<T>
+  const now = Date.now()
+  if (!noCache) {
+    const hit = requestCache.get(path)
+    if (hit && now - hit.at < REQUEST_TTL_MS) {
+      return hit.promise as Promise<T>
+    }
   }
 
   const promise = fetch(`${BASE}${path}`)
@@ -485,7 +495,7 @@ async function get<T>(path: string, noCache = false): Promise<T> {
     })
 
   if (!noCache) {
-    requestCache.set(path, promise)
+    requestCache.set(path, { promise, at: now })
   }
   return promise
 }
@@ -624,6 +634,7 @@ export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   a.click()
   URL.revokeObjectURL(url)
 }
+
 
 
 
