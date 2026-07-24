@@ -2180,7 +2180,7 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 
-  .nav-toggle-topbar {
+  .nav-toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2188,10 +2188,6 @@ tbody tr:hover {
     height: 36px;
     padding: 0;
     flex-shrink: 0;
-  }
-
-  .nav-toggle-side {
-    display: none !important;
   }
 
   .app-topbar-brand {
@@ -4354,36 +4350,14 @@ tbody tr:hover {
   .app-nav {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
   }
-
-  .nav-toggle-topbar {
-    display: none !important;
-  }
-
-  .nav-toggle-side {
+  .nav-toggle {
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    position: fixed;
-    top: 50%;
-    left: calc(var(--nav-width, 260px) - 18px);
-    z-index: 60;
     width: 36px;
     height: 36px;
     padding: 0;
-    margin: 0;
-    border-radius: 10px;
-    background: var(--color-surface, var(--panel));
-    border: 1px solid var(--color-border, var(--border));
-    box-shadow: var(--shadow-sm, 0 4px 14px oklch(0.2 0.02 240 / 0.12));
-    transform: translateY(-50%);
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .nav-toggle-side:hover {
-    background: var(--color-elevated, var(--elevated));
-  }
-
-  .app-shell.desktop-nav-collapsed .nav-toggle-side {
-    left: 12px;
+    flex-shrink: 0;
+    margin-right: 8px;
   }
 }
