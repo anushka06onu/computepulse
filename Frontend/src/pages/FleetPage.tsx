@@ -58,9 +58,8 @@ export function FleetPage() {
   const webgl = useMemo(() => canWebGL(), [])
 
   useEffect(() => {
-    if (health && !health.ready) return
+    if (health?.ready === false) return
     let cancelled = false
-    setData(null)
     api
       .fleet(seed, critical, watch)
       .then((d) => {
@@ -72,7 +71,7 @@ export function FleetPage() {
     return () => {
       cancelled = true
     }
-  }, [seed, critical, watch, health])
+  }, [seed, critical, watch, health?.ready])
 
   const filtered = useMemo(() => {
     if (!data) return []
@@ -361,5 +360,6 @@ export function FleetPage() {
     </div>
   )
 }
+
 
 

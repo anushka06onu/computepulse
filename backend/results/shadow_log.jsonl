@@ -151,6 +151,33 @@
 {"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784837231.302432}
 {"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784837233.720683}
 {"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784837963.704383}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784838184.06223}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784838195.2360241}
+{"event": "demo", "from": 1477, "to": 1196, "health_before": 6.0, "health_after": 97.0, "placement_delta": 85.9, "seed": 0, "rank": 0, "ts": 1784838203.899738}
+{"event": "demo", "from": 659, "to": 1196, "health_before": 6.4, "health_after": 97.0, "placement_delta": 84.6, "seed": 0, "rank": 1, "ts": 1784838242.792526}
+{"event": "demo", "from": 1521, "to": 1196, "health_before": 6.9, "health_after": 97.0, "placement_delta": 87.4, "seed": 0, "rank": 2, "ts": 1784838265.2320619}
+{"event": "demo", "from": 1391, "to": 355, "health_before": 10.7, "health_after": 96.4, "placement_delta": 82.4, "seed": 1, "rank": 0, "ts": 1784838639.071231}
+{"event": "demo", "from": 1477, "to": 1196, "health_before": 6.0, "health_after": 97.0, "placement_delta": 85.9, "estimated_savings_usd": 828.1, "seed": 0, "rank": 0, "ts": 1784838796.265942}
+{"event": "demo", "from": 1521, "to": 1196, "health_before": 6.9, "health_after": 97.0, "placement_delta": 87.4, "estimated_savings_usd": 819.9, "seed": 0, "rank": 2, "ts": 1784838815.5859962}
+{"event": "demo", "from": 659, "to": 1196, "health_before": 6.4, "health_after": 97.0, "placement_delta": 84.6, "estimated_savings_usd": 824.5, "seed": 0, "rank": 1, "ts": 1784838840.602458}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784839577.1572428}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784839580.087751}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784839582.02978}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784839582.637372}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784839592.61456}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784839593.2216141}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784839593.8271239}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784839594.440296}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784840254.960041}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784840259.455179}
+{"event": "warning_open", "alert_id": "node_critical:1477:seed0", "type": "node_critical", "node_id": 1477, "seed": 0, "ts": 1784840264.697855}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784840686.4985979}
+{"event": "demo", "from": 1477, "to": 1196, "health_before": 6.0, "health_after": 97.0, "placement_delta": 85.9, "estimated_savings_usd": 828.1, "seed": 0, "rank": 0, "ts": 1784840686.5805938}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784840933.801277}
+{"event": "demo", "from": 1477, "to": 1196, "health_before": 6.0, "health_after": 97.0, "placement_delta": 85.9, "estimated_savings_usd": 828.1, "seed": 0, "rank": 0, "ts": 1784840934.143117}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784840934.311445}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784840934.330878}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784840934.350292}
 {"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784839012.246817}
 {"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784839012.547922}
 {"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784839012.850079}

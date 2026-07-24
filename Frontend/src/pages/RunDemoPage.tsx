@@ -63,7 +63,7 @@ export function RunDemoPage() {
 
   // Load scenario for current seed + rank.
   useEffect(() => {
-    if (health && !health.ready) return
+    if (health?.ready === false) return
     let cancelled = false
 
     setLoading(true)
@@ -81,7 +81,7 @@ export function RunDemoPage() {
     return () => {
       cancelled = true
     }
-  }, [health, seed, demoRank, ensureDemoScenario, startPlayback])
+  }, [health?.ready, seed, demoRank, ensureDemoScenario, startPlayback])
 
   useEffect(() => {
     if (demoScenario && demoScenario.seed === seed) setLoading(false)
@@ -423,3 +423,4 @@ export function RunDemoPage() {
     </div>
   )
 }
+

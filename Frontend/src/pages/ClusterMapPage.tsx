@@ -56,9 +56,8 @@ export function ClusterMapPage() {
   const [view, setView] = useState<ViewMode>(webgl ? '3d' : '2d')
 
   useEffect(() => {
-    if (health && !health.ready) return
+    if (health?.ready === false) return
     let cancelled = false
-    setData(null)
     api
       .fleet(seed, critical, watch)
       .then((d) => {
@@ -70,7 +69,7 @@ export function ClusterMapPage() {
     return () => {
       cancelled = true
     }
-  }, [seed, critical, watch, health])
+  }, [seed, critical, watch, health?.ready])
 
   const cells = useMemo(() => {
     if (!data) return []
@@ -221,3 +220,4 @@ export function ClusterMapPage() {
     </div>
   )
 }
+

@@ -16,21 +16,20 @@ def placement(n: int = Query(5, ge=3, le=20), seed: int | None = Query(None)):
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
 
-    assert store.node_scores is not None
     snap = store.get_snapshot(seed).copy()
+    fail_map = store.fail_rate_map()
 
-    scores = []
-    components = []
-    for _, r in snap.iterrows():
-        nid = int(r["node_id"])
-        hist = store.hist_fail_rate(nid)
-        fused = float(r["fused_risk"])
-        anomaly = float(r["anomaly_score"])
-        sc = store.placement_score(fused, anomaly, hist)
-        scores.append(sc)
-        components.append(store.placement_components(fused, anomaly, hist))
-    snap["placement_score"] = scores
-    snap["_components"] = components
+    hist = snap["node_id"].map(lambda nid: float(fail_map.get(int(nid), 0.0)))
+    fused = snap["fused_risk"].astype(float)
+    anomaly = snap["anomaly_score"].astype(float)
+    # placement_score = 0.6*safety + 0.3*normality + 0.1*history
+    safety = 100.0 - fused
+    normality = 100.0 - anomaly * 100.0
+    history = 100.0 - hist * 100.0
+    snap["placement_score"] = (0.6 * safety + 0.3 * normality + 0.1 * history).round(2)
+    snap["_safety"] = safety.round(2)
+    snap["_normality"] = normality.round(2)
+    snap["_history"] = history.round(2)
 
     best = snap.sort_values("placement_score", ascending=False).head(n)
     worst = snap.sort_values("placement_score", ascending=True).head(n)
@@ -39,9 +38,7 @@ def placement(n: int = Query(5, ge=3, le=20), seed: int | None = Query(None)):
         out = []
         for _, r in df.iterrows():
             nid = int(r["node_id"])
-            fail_rate = store.node_scores.loc[
-                store.node_scores["node_id"] == nid, "actual_failure_rate"
-            ]
+            afr = store.actual_failure_rate(nid)
             out.append(
                 {
                     "node_id": nid,
@@ -49,13 +46,15 @@ def placement(n: int = Query(5, ge=3, le=20), seed: int | None = Query(None)):
                     "anomaly_score": round(float(r["anomaly_score"]), 4),
                     "fused_risk": round(float(r["fused_risk"]), 2),
                     "score": round(float(r["placement_score"]), 2),
-                    "components": r["_components"],
+                    "components": {
+                        "safety": float(r["_safety"]),
+                        "normality": float(r["_normality"]),
+                        "history": float(r["_history"]),
+                    },
                     "cpu_usage_pct": round(float(r["cpu_usage_pct"]), 2),
                     "gpu_usage_pct": round(float(r["gpu_usage_pct"]), 2),
                     "actual_failure_rate": (
-                        round(float(fail_rate.values[0]), 4)
-                        if len(fail_rate)
-                        else None
+                        round(afr, 4) if afr is not None else None
                     ),
                 }
             )

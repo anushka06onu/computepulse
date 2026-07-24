@@ -24,12 +24,12 @@ export function OptimizePage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (health && !health.ready) return
+    if (health?.ready === false) return
     api
       .optimize(seed, watch)
       .then(setData)
       .catch((e: Error) => setError(e.message))
-  }, [health, seed, watch])
+  }, [health?.ready, seed, watch])
 
   if (error) return <p className="banner">{error}</p>
   if (!data) return <div className="skeleton" style={{ height: 240 }} />
@@ -191,5 +191,6 @@ export function OptimizePage() {
     </div>
   )
 }
+
 
 

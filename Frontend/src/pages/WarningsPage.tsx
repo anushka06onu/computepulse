@@ -32,7 +32,7 @@ export function WarningsPage() {
   const [busy, setBusy] = useState(false)
 
   const load = (rescan: boolean) => {
-    if (health && !health.ready) return
+    if (health?.ready === false) return
     setError(null)
     setBusy(true)
     // Fast list first (no Groq/HF). Detail enrich on click.
@@ -52,13 +52,12 @@ export function WarningsPage() {
   useEffect(() => {
     load(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seed, critical, watch, health])
+  }, [seed, critical, watch, health?.ready])
 
   useEffect(() => {
-    if (!selectedId || (health && !health.ready)) return
+    if (!selectedId || health?.ready === false) return
     let cancelled = false
     setDetailLoading(true)
-    setDetail(null)
     api
       .warning(selectedId, seed, critical, watch)
       .then((d) => {
@@ -75,7 +74,7 @@ export function WarningsPage() {
     return () => {
       cancelled = true
     }
-  }, [selectedId, seed, critical, watch, health, data])
+  }, [selectedId, seed, critical, watch, health?.ready, data])
 
   const filtered = useMemo(() => {
     if (!data) return []
@@ -332,4 +331,5 @@ export function WarningsPage() {
     </div>
   )
 }
+
 
