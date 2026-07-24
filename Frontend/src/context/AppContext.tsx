@@ -115,7 +115,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch {
       setHealth({
         ready: false,
-        missing: [{ file: 'api', command: 'uvicorn api.main:app --reload' }],
+        missing: [{ file: 'api', command: 'cd backend && uvicorn api.main:app --reload' }],
         root: '',
       })
     } finally {
