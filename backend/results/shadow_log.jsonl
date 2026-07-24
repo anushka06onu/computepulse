@@ -446,3 +446,11 @@
 {"event": "demo_place", "from": 1302, "to": 1029, "health_before": 15.3, "health_after": 95.4, "placement_delta": 59.5, "estimated_savings_usd": 728.9, "job_id": 5144, "seed": 0, "rank": 10, "critical": 70.0, "reservations": 10, "session_index": 10, "constrained": false, "ts": 1784915430.4466329}
 {"event": "demo_place", "from": 819, "to": 865, "health_before": 17.3, "health_after": 92.7, "placement_delta": 62.8, "estimated_savings_usd": 686.1, "job_id": 5162, "seed": 0, "rank": 11, "critical": 70.0, "reservations": 11, "session_index": 11, "constrained": false, "ts": 1784915430.532084}
 {"event": "demo_place", "from": 587, "to": 348, "health_before": 19.1, "health_after": 93.2, "placement_delta": 54.2, "estimated_savings_usd": 674.3, "job_id": 5112, "seed": 0, "rank": 12, "critical": 70.0, "reservations": 12, "session_index": 12, "constrained": false, "ts": 1784915430.6195269}
+{"event": "demo", "from": 1391, "to": 730, "health_before": 10.7, "health_after": 94.4, "placement_delta": 79.7, "estimated_savings_usd": 761.7, "job_id": 5117, "seed": 1, "rank": 0, "critical": 70.0, "reservations": 0, "session_index": null, "constrained": false, "ts": 1784915676.317947}
+{"event": "chat", "intent": "list_features", "node_id": null, "llm_used": false, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784916495.184921}
+{"event": "chat", "intent": "recommend", "node_id": 1477, "llm_used": false, "seed": 0, "critical": 70, "watch": 40, "ts": 1784916496.5317812}
+{"event": "chat", "intent": "feature_help", "node_id": null, "llm_used": false, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784916631.354795}
+{"event": "chat", "intent": "product_overview", "node_id": null, "llm_used": false, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784916631.515698}
+{"event": "chat", "intent": "node_brief", "node_id": 99999, "llm_used": false, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784916631.856297}
+{"event": "chat", "intent": "recommend", "node_id": 1477, "llm_used": false, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784916632.967596}
+{"event": "chat", "intent": "list_features", "node_id": null, "llm_used": true, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784916649.844194}
