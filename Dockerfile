@@ -17,14 +17,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend source, data, models, and results
-COPY api/ ./api
-COPY data/ ./data
-COPY models/ ./models
-COPY results/ ./results
+COPY backend/api/ ./api
+COPY backend/data/ ./data
+COPY backend/models/ ./models
+COPY backend/results/ ./results
 
 # Copy compiled frontend build
 COPY --from=frontend-builder /app/Frontend/dist ./Frontend/dist
