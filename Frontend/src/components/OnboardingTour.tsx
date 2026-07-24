@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useApp } from '../context/AppContext'
@@ -33,6 +33,17 @@ export function OnboardingTour() {
   const navigate = useNavigate()
   const current = steps[step]
 
+  const primaryRef = useRef<HTMLButtonElement | null>(null)
+
+  useEffect(() => {
+    primaryRef.current?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') completeTour()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [completeTour, step])
+
   return (
     <motion.div
       className="tour-overlay"
@@ -42,6 +53,9 @@ export function OnboardingTour() {
     >
       <motion.div
         className="tour-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tour-title"
         variants={scaleIn}
         initial="hidden"
         animate="visible"
@@ -71,7 +85,7 @@ export function OnboardingTour() {
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.22 }}
           >
-            <h2>{current.title}</h2>
+            <h2 id="tour-title">{current.title}</h2>
             <p style={{ marginBottom: 20 }}>{current.body}</p>
           </motion.div>
         </AnimatePresence>
@@ -80,6 +94,7 @@ export function OnboardingTour() {
             Skip
           </button>
           <button
+            ref={primaryRef}
             className="btn btn-primary"
             onClick={() => {
               navigate(current.path)
