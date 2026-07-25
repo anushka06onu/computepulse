@@ -104,77 +104,86 @@ def compute_priority_scores(df: pd.DataFrame) -> pd.DataFrame:
     return out.sort_values("priority_score", ascending=False)
 
 
-def _conflicts_for_row(row: pd.Series) -> list[dict[str, Any]]:
-    node = int(row["node_id"])
-    found: list[dict[str, Any]] = []
-
-    if float(row["risk_score"]) > RISK_HIGH and bool(row["placement_safe"]):
-        found.append(
-            {
-                "node_id": node,
-                "type": "Risk vs Placement",
-                "model_a": "Model 1 — Failure Risk",
-                "model_a_says": (
-                    f"{row['risk_score']:.0f}% failure risk now — avoid this node"
-                ),
-                "model_b": "Model 2 — Placement",
-                "model_b_says": (
-                    f"Historical failure rate {row['avg_risk_score']:.0f}% — "
-                    "record says safe to place jobs"
-                ),
-                "severity": "high",
-            }
-        )
-
-    if float(row["risk_score"]) > RISK_HIGH and bool(row["is_underutilized"]):
-        found.append(
-            {
-                "node_id": node,
-                "type": "Risk vs Idle GPU",
-                "model_a": "Model 1 — Failure Risk",
-                "model_a_says": (
-                    f"{row['risk_score']:.0f}% failure risk — node is struggling"
-                ),
-                "model_b": "Model 3 — GPU Savings",
-                "model_b_says": (
-                    f"GPU at {row['gpu_usage_pct']:.0f}% util — underutilized, "
-                    f"est. ${row['estimated_savings_usd']:,.0f} reclaim"
-                ),
-                "severity": "high",
-            }
-        )
-
-    if float(row["avg_risk_score"]) > PLACEMENT_RISKY_ABOVE and bool(
-        row["is_underutilized"]
-    ):
-        found.append(
-            {
-                "node_id": node,
-                "type": "Placement vs Idle GPU",
-                "model_a": "Model 2 — Placement",
-                "model_a_says": (
-                    f"Historical failure rate {row['avg_risk_score']:.0f}% — "
-                    "avoid placing new jobs here"
-                ),
-                "model_b": "Model 3 — GPU Savings",
-                "model_b_says": (
-                    f"GPU at {row['gpu_usage_pct']:.0f}% — "
-                    "consolidate or reclaim idle capacity"
-                ),
-                "severity": "medium",
-            }
-        )
-
-    return found
-
-
-def detect_conflicts(df: pd.DataFrame, limit: int = 12) -> list[dict[str, Any]]:
-    """Flag real nodes where two models disagree. Both views kept visible."""
+def detect_conflicts(
+    df: pd.DataFrame, limit: int | None = None
+) -> list[dict[str, Any]]:
+    """Flag every real node where two models disagree (full-fleet scan)."""
     conflicts: list[dict[str, Any]] = []
-    for _, row in df.iterrows():
-        conflicts.extend(_conflicts_for_row(row))
-        if len(conflicts) >= limit:
-            break
+    if df.empty:
+        return conflicts
+
+    risk = df["risk_score"].astype(float)
+    place = df["avg_risk_score"].astype(float)
+    idle = df["is_underutilized"].astype(bool)
+    safe = df["placement_safe"].astype(bool)
+
+    masks = [
+        (
+            (risk > RISK_HIGH) & safe,
+            "Risk vs Placement",
+            "high",
+            "Model 1 — Failure Risk",
+            "Model 2 — Placement",
+            lambda r: f"{r['risk_score']:.0f}% failure risk now — avoid this node",
+            lambda r: (
+                f"Historical failure rate {r['avg_risk_score']:.0f}% — "
+                "record says safe to place jobs"
+            ),
+        ),
+        (
+            (risk > RISK_HIGH) & idle,
+            "Risk vs Idle GPU",
+            "high",
+            "Model 1 — Failure Risk",
+            "Model 3 — GPU Savings",
+            lambda r: f"{r['risk_score']:.0f}% failure risk — node is struggling",
+            lambda r: (
+                f"GPU at {r['gpu_usage_pct']:.0f}% util — underutilized, "
+                f"est. ${r['estimated_savings_usd']:,.0f} reclaim"
+            ),
+        ),
+        (
+            (place > PLACEMENT_RISKY_ABOVE) & idle,
+            "Placement vs Idle GPU",
+            "medium",
+            "Model 2 — Placement",
+            "Model 3 — GPU Savings",
+            lambda r: (
+                f"Historical failure rate {r['avg_risk_score']:.0f}% — "
+                "avoid placing new jobs here"
+            ),
+            lambda r: (
+                f"GPU at {r['gpu_usage_pct']:.0f}% — "
+                "consolidate or reclaim idle capacity"
+            ),
+        ),
+    ]
+
+    for mask, ctype, severity, ma, mb, sa, sb in masks:
+        hits = df.loc[mask]
+        for _, row in hits.iterrows():
+            conflicts.append(
+                {
+                    "node_id": int(row["node_id"]),
+                    "type": ctype,
+                    "model_a": ma,
+                    "model_a_says": sa(row),
+                    "model_b": mb,
+                    "model_b_says": sb(row),
+                    "severity": severity,
+                    "risk_score": round(float(row["risk_score"]), 2),
+                    "avg_risk_score": round(float(row["avg_risk_score"]), 2),
+                    "gpu_usage_pct": round(float(row["gpu_usage_pct"]), 2),
+                    "estimated_savings_usd": round(
+                        float(row["estimated_savings_usd"]), 2
+                    ),
+                    "is_underutilized": bool(row["is_underutilized"]),
+                    "priority_score": round(float(row["priority_score"]), 2),
+                }
+            )
+            if limit is not None and len(conflicts) >= limit:
+                return conflicts
+    conflicts.sort(key=lambda c: float(c.get("priority_score") or 0), reverse=True)
     return conflicts
 
 
@@ -190,27 +199,32 @@ def severity_for(row: pd.Series, has_conflict: bool) -> tuple[str, str]:
     return "low", "healthy"
 
 
-def get_shap_reason(node_row: pd.Series, explainer: Any) -> str:
-    """One plain sentence from the top SHAP feature of the risk model."""
-    row_features = node_row[FEATURES].to_frame().T.astype(float)
-    shap_vals = explainer.shap_values(row_features)
-
-    if isinstance(shap_vals, list):
-        local_shap = shap_vals[1][0]
-    else:
-        local_shap = shap_vals[0]
-
+def _reason_from_impacts(local_shap: np.ndarray) -> str:
     abs_impacts = np.abs(local_shap)
     top_idx = int(np.argmax(abs_impacts))
     top_feature = FEATURES[top_idx]
     top_impact = float(local_shap[top_idx])
-
     human_phrase = FEATURE_PHRASES.get(top_feature, top_feature)
     direction = "pushing risk up" if top_impact > 0 else "reducing risk"
     return (
         f"Flagged because {human_phrase} "
         f"({direction}; top SHAP feature: {top_feature}, impact {top_impact:+.2f})."
     )
+
+
+def get_shap_reasons_batch(top_df: pd.DataFrame, explainer: Any) -> list[str]:
+    """One SHAP call for the whole top-N frame (much faster than per-row)."""
+    if top_df.empty:
+        return []
+    X = top_df[FEATURES].astype(float)
+    shap_vals = explainer.shap_values(X)
+    if isinstance(shap_vals, list):
+        matrix = np.asarray(shap_vals[1])
+    else:
+        matrix = np.asarray(shap_vals)
+    if matrix.ndim == 1:
+        matrix = matrix.reshape(1, -1)
+    return [_reason_from_impacts(matrix[i]) for i in range(len(top_df))]
 
 
 def assign_action(
@@ -233,35 +247,60 @@ def assign_action(
     return f"Review Node-{node} — moderate signals across models"
 
 
-def build_daily_brief(store: Any, seed: int | None = None) -> dict[str, Any]:
-    """Full brief payload for API + Streamlit — real fleet, top-5 actions."""
-    store.ensure_loaded()
+# Seed → (monotonic_ts, payload). Keeps live demos snappy after first build.
+_BRIEF_CACHE: dict[int, tuple[float, dict[str, Any]]] = {}
+_BRIEF_CACHE_TTL_S = 90.0
 
-    telem = build_brief_telemetry(store, seed)
+
+def clear_brief_cache() -> None:
+    _BRIEF_CACHE.clear()
+
+
+def build_daily_brief(
+    store: Any, seed: int | None = None, *, use_cache: bool = True
+) -> dict[str, Any]:
+    """Full brief payload for API + Streamlit — real fleet, top-5 actions."""
+    import time as _time
+
+    store.ensure_loaded()
+    resolved_seed = int(store.refresh_seed if seed is None else seed)
+
+    if use_cache:
+        hit = _BRIEF_CACHE.get(resolved_seed)
+        if hit and (_time.monotonic() - hit[0]) < _BRIEF_CACHE_TTL_S:
+            return hit[1]
+
+    telem = build_brief_telemetry(store, resolved_seed)
     scored = _score_three_models(telem, store)
     ranked = compute_priority_scores(scored)
 
-    # Conflicts scanned over the highest-priority slice of the real fleet
-    # (top rows carry the disagreements worth an operator's morning).
-    conflicts = detect_conflicts(ranked.head(200))
+    # Full-fleet conflict scan. Today's top-5 still surfaces exactly ONE
+    # conflict card; the Conflicts tab lists every disagreement found.
+    fleet_conflicts = detect_conflicts(ranked)
 
     by_node: dict[int, list[dict[str, Any]]] = {}
-    for c in conflicts:
+    for c in fleet_conflicts:
         by_node.setdefault(int(c["node_id"]), []).append(c)
-    primary = {nid: items[0] for nid, items in by_node.items()}
+    conflict_ids = set(by_node)
+    non_conflict = ranked[~ranked["node_id"].astype(int).isin(conflict_ids)].head(4)
+    featured: list[dict[str, Any]] = []
+    if conflict_ids:
+        conflict_row = ranked[ranked["node_id"].astype(int).isin(conflict_ids)].head(1)
+        selected_id = int(conflict_row.iloc[0]["node_id"])
+        featured = [by_node[selected_id][0]]
+        top = pd.concat([non_conflict, conflict_row], ignore_index=True)
+        top = top.sort_values("priority_score", ascending=False).reset_index(drop=True)
+    else:
+        top = ranked.head(5).reset_index(drop=True)
 
-    # Guarantee at least one conflicted real node appears inside the top-5
-    # so the live demo always shows the flag working.
-    top = ranked.head(5)
-    top_ids = set(top["node_id"].astype(int))
-    if primary and not (top_ids & set(primary)):
-        first_conflict_id = next(iter(primary))
-        conflict_row = ranked[ranked["node_id"].astype(int) == first_conflict_id]
-        top = pd.concat([top.head(4), conflict_row.head(1)])
+    featured_by_node = {int(c["node_id"]): [c] for c in featured}
+    primary = {nid: items[0] for nid, items in featured_by_node.items()}
 
     explainer = store.get_explainer()
+    reasons = get_shap_reasons_batch(top, explainer)
+
     actions: list[dict[str, Any]] = []
-    for rank, (_, row) in enumerate(top.iterrows(), 1):
+    for rank, ((_, row), reason) in enumerate(zip(top.iterrows(), reasons), 1):
         nid = int(row["node_id"])
         has_conflict = nid in primary
         severity, tone = severity_for(row, has_conflict)
@@ -269,8 +308,8 @@ def build_daily_brief(store: Any, seed: int | None = None) -> dict[str, Any]:
             {
                 "node_id": nid,
                 "rank": rank,
-                "action_text": assign_action(row, by_node),
-                "reason": get_shap_reason(row, explainer),
+                "action_text": assign_action(row, featured_by_node),
+                "reason": reason,
                 "risk_score": round(float(row["risk_score"]), 2),
                 "avg_risk_score": round(float(row["avg_risk_score"]), 2),
                 "placement_score": round(float(row["placement_score"]), 2),
@@ -285,22 +324,24 @@ def build_daily_brief(store: Any, seed: int | None = None) -> dict[str, Any]:
                 "queue_length": int(row.get("queue_length", 0)),
                 "has_conflict": has_conflict,
                 "conflict": primary.get(nid),
-                "conflicts": by_node.get(nid, []),
+                "conflicts": featured_by_node.get(nid, []),
                 "priority_score": round(float(row["priority_score"]), 2),
                 "severity": severity,
                 "severity_tone": tone,
             }
         )
 
-    return {
+    payload = {
         "actions": actions,
-        "conflicts": conflicts,
+        "conflicts": fleet_conflicts,
         "total_actions": len(actions),
-        "total_conflicts": len(conflicts),
+        "total_conflicts": len(fleet_conflicts),
+        "featured_conflicts": len(featured),
         "fleet_nodes": int(len(ranked)),
         "total_savings": round(
             float(sum(a["estimated_savings_usd"] for a in actions)), 2
         ),
+        "seed": resolved_seed,
         "caveat": (
             f"All {len(ranked):,} nodes come from the real system snapshot and are "
             "scored by the existing Model 1/2/3 artifacts — no training ran in this "
@@ -314,3 +355,6 @@ def build_daily_brief(store: Any, seed: int | None = None) -> dict[str, Any]:
             "model3": "Idle GPU reclaim (util < 15%)",
         },
     }
+    _BRIEF_CACHE[resolved_seed] = (_time.monotonic(), payload)
+    return payload
+
