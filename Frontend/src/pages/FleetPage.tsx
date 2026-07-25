@@ -20,7 +20,6 @@ import {
 import { api, downloadCsv, type FleetNode, type FleetSnapshot } from '../api/client'
 import { useApp } from '../context/AppContext'
 import { PageError } from '../components/PageError'
-import { DailyActionBrief } from '../components/DailyActionBrief'
 import { KPI, CountUp } from '../components/KPI'
 import { DataTable } from '../components/DataTable'
 import { StatusBadge } from '../components/StatusBadge'
@@ -126,26 +125,6 @@ export function FleetPage() {
 
   return (
     <div>
-      <DailyActionBrief embedded />
-
-      <div className="dab-model-strip" aria-label="Model panels">
-        <Link to="/app/fleet" className="dab-model-tile" aria-current="page">
-          <span className="dab-model-num">Model 1</span>
-          <span className="dab-model-name">Failure Risk</span>
-          <span className="dab-model-desc">Fleet risk scores below</span>
-        </Link>
-        <Link to="/app/placement" className="dab-model-tile">
-          <span className="dab-model-num">Model 2</span>
-          <span className="dab-model-name">Job Placement</span>
-          <span className="dab-model-desc">Recommend / avoid hosts</span>
-        </Link>
-        <Link to="/app/optimize" className="dab-model-tile">
-          <span className="dab-model-num">Model 3</span>
-          <span className="dab-model-name">Idle GPU Savings</span>
-          <span className="dab-model-desc">Reclaim underutilized capacity</span>
-        </Link>
-      </div>
-
       <div className="page-header">
         <div>
           <div className="page-eyebrow">
@@ -394,6 +373,7 @@ export function FleetPage() {
     </div>
   )
 }
+
 
 
 
