@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -153,15 +153,18 @@ export function DailyActionBrief({ embedded = false }: Props) {
   const [copied, setCopied] = useState(false)
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const hasDataRef = useRef(false)
 
   const load = useCallback(() => {
-    setLoading(true)
+    // Keep prior KPIs/cards visible while refreshing (no blank flash).
+    if (!hasDataRef.current) setLoading(true)
     setError(null)
     let cancelled = false
     api
       .dailyBrief(seed)
       .then((d) => {
         if (cancelled) return
+        hasDataRef.current = true
         setData(d)
         setGeneratedAt(new Date())
       })
@@ -368,50 +371,6 @@ export function DailyActionBrief({ embedded = false }: Props) {
         )}
       </div>
 
-      {data.conflicts.length > 0 && (
-        <details className="dab-all-conflicts">
-          <summary>
-            <ShieldAlert size={15} />
-            All model conflicts across the fleet ({data.conflicts.length})
-          </summary>
-          <div className="dab-list" style={{ marginTop: 12 }}>
-            {data.conflicts.map((c, i) => (
-              <article key={`${c.node_id}-${c.type}-${i}`} className="dab-card is-conflict">
-                <div className="dab-card-top">
-                  <div className="dab-rank">!</div>
-                  <div className="dab-card-head">
-                    <h3 className="dab-action-title">
-                      Node {c.node_id} — {c.type}
-                    </h3>
-                    <div className="dab-meta">
-                      <span
-                        className={`dab-sev dab-sev-${c.severity === 'high' ? 'critical' : 'watch'}`}
-                      >
-                        <span className="dab-sev-dot" aria-hidden />
-                        {c.severity} severity
-                      </span>
-                      <Link className="dab-chip" to={`/app/nodes/${c.node_id}`}>
-                        Inspect node →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div className="dab-conflict-split">
-                  <div className="dab-view a">
-                    <div className="dab-view-model">{c.model_a}</div>
-                    <div className="dab-view-says">{c.model_a_says}</div>
-                  </div>
-                  <div className="dab-view b">
-                    <div className="dab-view-model">{c.model_b}</div>
-                    <div className="dab-view-says">{c.model_b_says}</div>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </details>
-      )}
-
       {!embedded && (
         <div className="dab-howto">
           <h3>How to use this brief</h3>
@@ -437,3 +396,4 @@ export function DailyActionBrief({ embedded = false }: Props) {
     </motion.section>
   )
 }
+

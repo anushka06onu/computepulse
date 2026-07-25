@@ -78,6 +78,11 @@ def warmup():
 
         try:
             store.ensure_loaded()
+            # Pre-build TreeExplainer + Daily Brief so /app/brief is instant.
+            store.get_explainer()
+            from api.services.brief_logic import build_daily_brief
+
+            build_daily_brief(store)
         except Exception as exc:  # noqa: BLE001
             print(f"Warmup skipped: {exc}")
 
@@ -97,5 +102,6 @@ if os.path.exists(static_dir):
         return JSONResponse(
             {"detail": "Frontend build index.html not found"}, status_code=404
         )
+
 
 

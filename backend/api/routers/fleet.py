@@ -60,5 +60,9 @@ def refresh_fleet():
         store.ensure_loaded()
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
+    from api.services.brief_logic import clear_brief_cache
+
+    clear_brief_cache()
     seed = store.bump_seed()
     return {"seed": seed}
+
