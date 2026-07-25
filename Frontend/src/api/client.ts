@@ -456,6 +456,12 @@ export interface DailyBriefConflict {
   model_b: string
   model_b_says: string
   severity: string
+  risk_score?: number
+  avg_risk_score?: number
+  gpu_usage_pct?: number
+  estimated_savings_usd?: number
+  is_underutilized?: boolean
+  priority_score?: number
 }
 
 export interface DailyBriefAction {
@@ -686,6 +692,7 @@ export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   a.click()
   URL.revokeObjectURL(url)
 }
+
 
 
 

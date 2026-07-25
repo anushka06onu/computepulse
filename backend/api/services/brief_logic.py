@@ -104,8 +104,10 @@ def compute_priority_scores(df: pd.DataFrame) -> pd.DataFrame:
     return out.sort_values("priority_score", ascending=False)
 
 
-def detect_conflicts(df: pd.DataFrame, limit: int = 12) -> list[dict[str, Any]]:
-    """Flag real nodes where two models disagree. Vectorized scan (fast)."""
+def detect_conflicts(
+    df: pd.DataFrame, limit: int | None = None
+) -> list[dict[str, Any]]:
+    """Flag every real node where two models disagree (full-fleet scan)."""
     conflicts: list[dict[str, Any]] = []
     if df.empty:
         return conflicts
@@ -158,8 +160,6 @@ def detect_conflicts(df: pd.DataFrame, limit: int = 12) -> list[dict[str, Any]]:
     ]
 
     for mask, ctype, severity, ma, mb, sa, sb in masks:
-        if len(conflicts) >= limit:
-            break
         hits = df.loc[mask]
         for _, row in hits.iterrows():
             conflicts.append(
@@ -171,10 +171,19 @@ def detect_conflicts(df: pd.DataFrame, limit: int = 12) -> list[dict[str, Any]]:
                     "model_b": mb,
                     "model_b_says": sb(row),
                     "severity": severity,
+                    "risk_score": round(float(row["risk_score"]), 2),
+                    "avg_risk_score": round(float(row["avg_risk_score"]), 2),
+                    "gpu_usage_pct": round(float(row["gpu_usage_pct"]), 2),
+                    "estimated_savings_usd": round(
+                        float(row["estimated_savings_usd"]), 2
+                    ),
+                    "is_underutilized": bool(row["is_underutilized"]),
+                    "priority_score": round(float(row["priority_score"]), 2),
                 }
             )
-            if len(conflicts) >= limit:
-                break
+            if limit is not None and len(conflicts) >= limit:
+                return conflicts
+    conflicts.sort(key=lambda c: float(c.get("priority_score") or 0), reverse=True)
     return conflicts
 
 
@@ -265,30 +274,27 @@ def build_daily_brief(
     scored = _score_three_models(telem, store)
     ranked = compute_priority_scores(scored)
 
-    # Find fleet disagreements, but keep today's brief focused: exactly one
-    # conflict card plus the four highest-priority non-conflict actions.
-    fleet_conflicts = detect_conflicts(ranked.head(200))
+    # Full-fleet conflict scan. Today's top-5 still surfaces exactly ONE
+    # conflict card; the Conflicts tab lists every disagreement found.
+    fleet_conflicts = detect_conflicts(ranked)
 
     by_node: dict[int, list[dict[str, Any]]] = {}
     for c in fleet_conflicts:
         by_node.setdefault(int(c["node_id"]), []).append(c)
     conflict_ids = set(by_node)
     non_conflict = ranked[~ranked["node_id"].astype(int).isin(conflict_ids)].head(4)
-    selected_conflicts: list[dict[str, Any]] = []
+    featured: list[dict[str, Any]] = []
     if conflict_ids:
         conflict_row = ranked[ranked["node_id"].astype(int).isin(conflict_ids)].head(1)
         selected_id = int(conflict_row.iloc[0]["node_id"])
-        selected_conflicts = [by_node[selected_id][0]]
+        featured = [by_node[selected_id][0]]
         top = pd.concat([non_conflict, conflict_row], ignore_index=True)
         top = top.sort_values("priority_score", ascending=False).reset_index(drop=True)
     else:
         top = ranked.head(5).reset_index(drop=True)
 
-    # Only the selected conflict is exposed in today's brief.
-    selected_by_node = {
-        int(c["node_id"]): [c] for c in selected_conflicts
-    }
-    primary = {nid: items[0] for nid, items in selected_by_node.items()}
+    featured_by_node = {int(c["node_id"]): [c] for c in featured}
+    primary = {nid: items[0] for nid, items in featured_by_node.items()}
 
     explainer = store.get_explainer()
     reasons = get_shap_reasons_batch(top, explainer)
@@ -302,7 +308,7 @@ def build_daily_brief(
             {
                 "node_id": nid,
                 "rank": rank,
-                "action_text": assign_action(row, selected_by_node),
+                "action_text": assign_action(row, featured_by_node),
                 "reason": reason,
                 "risk_score": round(float(row["risk_score"]), 2),
                 "avg_risk_score": round(float(row["avg_risk_score"]), 2),
@@ -318,7 +324,7 @@ def build_daily_brief(
                 "queue_length": int(row.get("queue_length", 0)),
                 "has_conflict": has_conflict,
                 "conflict": primary.get(nid),
-                "conflicts": selected_by_node.get(nid, []),
+                "conflicts": featured_by_node.get(nid, []),
                 "priority_score": round(float(row["priority_score"]), 2),
                 "severity": severity,
                 "severity_tone": tone,
@@ -327,9 +333,10 @@ def build_daily_brief(
 
     payload = {
         "actions": actions,
-        "conflicts": selected_conflicts,
+        "conflicts": fleet_conflicts,
         "total_actions": len(actions),
-        "total_conflicts": len(selected_conflicts),
+        "total_conflicts": len(fleet_conflicts),
+        "featured_conflicts": len(featured),
         "fleet_nodes": int(len(ranked)),
         "total_savings": round(
             float(sum(a["estimated_savings_usd"] for a in actions)), 2
