@@ -8,6 +8,9 @@ import { RouteSkeleton } from './components/RouteSkeleton'
 const FleetPage = lazy(() =>
   import('./pages/FleetPage').then((m) => ({ default: m.FleetPage })),
 )
+const BriefPage = lazy(() =>
+  import('./pages/BriefPage').then((m) => ({ default: m.BriefPage })),
+)
 const NodePage = lazy(() =>
   import('./pages/NodePage').then((m) => ({ default: m.NodePage })),
 )
@@ -50,6 +53,14 @@ export default function App() {
               element={
                 <LazyPage>
                   <FleetPage />
+                </LazyPage>
+              }
+            />
+            <Route
+              path="brief"
+              element={
+                <LazyPage>
+                  <BriefPage />
                 </LazyPage>
               }
             />

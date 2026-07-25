@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { GitCompare } from 'lucide-react'
 import { api, type NodeDetail } from '../api/client'
@@ -9,8 +10,17 @@ import { pressDown, scaleIn, staggerContainer, staggerItem } from '../motion/pre
 
 export function ComparePage() {
   const { seed, critical, watch, health } = useApp()
+  const [searchParams] = useSearchParams()
   const [ids, setIds] = useState<number[]>([])
-  const [selected, setSelected] = useState<number[]>([])
+  const [selected, setSelected] = useState<number[]>(() => {
+    const raw = searchParams.get('nodes')
+    if (!raw) return []
+    return raw
+      .split(',')
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isFinite(n) && n > 0)
+      .slice(0, 3)
+  })
   const [results, setResults] = useState<NodeDetail[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -224,6 +234,7 @@ export function ComparePage() {
     </div>
   )
 }
+
 
 
 

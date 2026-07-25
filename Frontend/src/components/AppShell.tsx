@@ -14,6 +14,7 @@ import {
   Sparkles,
   Wallet,
   X,
+  ClipboardList
 } from 'lucide-react'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -34,6 +35,7 @@ const ChatDock = lazy(() =>
 )
 
 const links = [
+  { to: '/app/brief', label: 'Action Brief', id: 'nav-brief', icon: ClipboardList, prefetch: () => import('../pages/BriefPage') },
   { to: '/app/fleet', label: 'Fleet Overview', id: 'nav-fleet', icon: LayoutDashboard, prefetch: () => import('../pages/FleetPage') },
   { to: '/app/warnings', label: 'Warnings', id: 'nav-warnings', icon: Bell, prefetch: () => import('../pages/WarningsPage') },
   { to: '/app/map', label: 'Cluster Map', id: 'nav-map', icon: Grid3x3, prefetch: () => import('../pages/ClusterMapPage') },
