@@ -498,3 +498,4 @@
 {"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924947.757122}
 {"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924954.130684}
 {"event": "warning_open", "alert_id": "node_critical:1521:seed0", "type": "node_critical", "node_id": 1521, "seed": 0, "ts": 1784957532.455061}
+{"event": "warning_open", "alert_id": "node_critical:1481:seed3", "type": "node_critical", "node_id": 1481, "seed": 3, "ts": 1784957696.573517}

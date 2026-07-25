@@ -5481,13 +5481,40 @@ tbody tr:hover {
 .dab-ctas {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 18px 16px;
+  align-items: stretch;
+  gap: 10px 12px;
+  padding: 14px 18px 16px;
+  margin-top: 2px;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .dab-cta {
-  font-size: 13px;
+  flex: 1 1 auto;
+  min-width: min(140px, 100%);
+  max-width: 100%;
+  box-sizing: border-box;
+  font-size: 12.5px;
+  font-weight: 600;
   text-decoration: none;
+  padding: 8px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 720px) {
+  .dab-ctas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .dab-cta {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 .dab-howto {
@@ -5688,6 +5715,8 @@ tbody tr:hover {
   background: var(--color-surface);
   box-shadow: var(--shadow-xs);
   overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .dab-card.is-conflict {
