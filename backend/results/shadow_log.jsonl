@@ -485,3 +485,16 @@
 {"event": "chat", "intent": "node_brief", "node_id": 1699, "llm_used": true, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784922232.1723819}
 {"event": "chat", "intent": "node_brief", "node_id": 1699, "llm_used": true, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784922277.8303528}
 {"event": "chat", "intent": "off_topic", "node_id": null, "llm_used": false, "seed": 0, "critical": 70.0, "watch": 40.0, "ts": 1784922687.3440902}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924938.307717}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924944.680088}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924947.031163}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924947.060388}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924947.130761}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924947.555454}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924947.6284428}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924947.735921}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924947.740416}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924947.740187}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924947.757122}
+{"event": "placement", "policy": "risk_anomaly_v2", "seed": 0, "top_pick": 1196, "score": 97.67, "ts": 1784924954.130684}
+{"event": "warning_open", "alert_id": "node_critical:1521:seed0", "type": "node_critical", "node_id": 1521, "seed": 0, "ts": 1784957532.455061}

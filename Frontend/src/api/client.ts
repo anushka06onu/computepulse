@@ -448,6 +448,54 @@ export interface WarningsResponse {
   caveat: string
 }
 
+export interface DailyBriefConflict {
+  node_id: number
+  type: string
+  model_a: string
+  model_a_says: string
+  model_b: string
+  model_b_says: string
+  severity: string
+}
+
+export interface DailyBriefAction {
+  node_id: number
+  rank: number
+  action_text: string
+  reason: string
+  risk_score: number
+  avg_risk_score: number
+  placement_score?: number
+  fused_risk?: number
+  is_underutilized: boolean
+  estimated_savings_usd: number
+  gpu_usage_pct: number
+  memory_pct?: number
+  error_count?: number
+  queue_length?: number
+  has_conflict: boolean
+  conflict?: DailyBriefConflict | null
+  conflicts?: DailyBriefConflict[]
+  priority_score?: number
+  severity?: 'conflict' | 'high' | 'medium' | 'low'
+  severity_tone?: 'critical' | 'watch' | 'healthy'
+}
+
+export interface DailyBriefResponse {
+  actions: DailyBriefAction[]
+  conflicts: DailyBriefConflict[]
+  total_actions: number
+  total_conflicts?: number
+  fleet_nodes?: number
+  total_savings: number
+  caveat?: string
+  models?: {
+    model1: string
+    model2: string
+    model3: string
+  }
+}
+
 const BASE = (
   (import.meta.env.VITE_API_BASE as string | undefined) ??
   (import.meta.env.VITE_API_URL as string | undefined) ??
@@ -513,6 +561,10 @@ async function post<T>(path: string, body?: unknown): Promise<T> {
 }
 
 export const api = {
+    dailyBrief: (seed?: number) =>
+      get<DailyBriefResponse>(
+        `/api/fleet/daily-brief${seed != null ? `?seed=${seed}` : ''}`,
+      ),
   health: () => get<HealthResponse>('/api/health', true),
   fleet: (seed?: number, critical = 70, watch = 40) =>
     get<FleetSnapshot>(
@@ -634,6 +686,7 @@ export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   a.click()
   URL.revokeObjectURL(url)
 }
+
 
 
 
