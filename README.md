@@ -4,7 +4,7 @@
 
 **Prometheus shows what IS. ComputePulse predicts what WILL BE.**
 
-ComputePulse is an AI-powered predictive system that forecasts the health and future state of GPU clusters. It enables system administrators to make proactive decisions instead of reactive ones, saving organizations millions in lost compute, researcher time, and inefficient hardware allocation.
+ComputePulse is an AI-powered predictive system that forecasts the health and future state of GPU clusters. It enables system administrators to make proactive decisions instead of reactive ones, Designed to estimate potential resource savings and reduce avoidable compute waste under configurable cost assumptions.
 
 ---
 
