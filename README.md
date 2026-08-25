@@ -25,8 +25,7 @@ GPU clusters are incredibly expensive infrastructure, often costing millions of 
 ## 💡 How It Helps (The Solution)
 ComputePulse shifts cluster management from *recovery* to *prevention*. By analyzing historical telemetry data, it learns the subtle signatures of impending failures and suboptimal allocations. 
 
-Instead of waiting for a node to crash, ComputePulse provides a **2-hour advance warning**, allowing administrators to seamlessly migrate critical jobs. Furthermore, it continuously analyzes cluster utilization to identify specific machines where GPUs are sitting idle, providing exact dollar-amount cost-saving recommendations.
-
+Instead of waiting for a node to crash, ComputePulse provides a **2-hour advance warning**, allowing administrators to seamlessly migrate critical jobs. Furthermore, it continuously analyzes cluster utilization to identify specific machines where GPUs are sitting idle, providing Scenario-based cost-saving estimates using a documented GPU-hour assumption.
 ---
 
 ## 🏗 Architecture & Modules
