@@ -1,6 +1,6 @@
 # ComputePulse: Predictive Cluster Intelligence
 **Team Name:** Aletheia  
-**Team Members:** Fateha Hossain Anushka (Team Leader), MD Nazmul Islam, Hanjala Habib Sadik
+**Team Members:** Fateha Hossain Anushka (Team Leader), Hanjala Habib Sadik
 
 **Prometheus shows what IS. ComputePulse predicts what WILL BE.**
 
