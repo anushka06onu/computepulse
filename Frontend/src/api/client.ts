@@ -1,3 +1,5 @@
+import { requestJson } from './request';
+
 export type Health = 'critical' | 'watch' | 'healthy'
 
 export interface MissingArtifact {
@@ -515,18 +517,6 @@ export function clearRequestCache() {
   requestCache.clear()
 }
 
-async function readApiError(res: Response): Promise<string> {
-  const detail = await res.text()
-  if (!detail) return res.statusText || `HTTP ${res.status}`
-  try {
-    const parsed = JSON.parse(detail) as { detail?: unknown }
-    if (typeof parsed.detail === 'string') return parsed.detail
-  } catch {
-    /* plain text */
-  }
-  return detail
-}
-
 async function get<T>(path: string, noCache = false): Promise<T> {
   const now = Date.now()
   if (!noCache) {
@@ -536,13 +526,7 @@ async function get<T>(path: string, noCache = false): Promise<T> {
     }
   }
 
-  const promise = fetch(`${BASE}${path}`)
-    .then(async (res) => {
-      if (!res.ok) {
-        throw new Error(await readApiError(res))
-      }
-      return res.json() as Promise<T>
-    })
+  const promise = requestJson<T>(`${BASE}${path}`)
     .catch((err) => {
       requestCache.delete(path)
       throw err
@@ -555,15 +539,11 @@ async function get<T>(path: string, noCache = false): Promise<T> {
 }
 
 async function post<T>(path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
+  return requestJson<T>(`${BASE}${path}`, {
     method: 'POST',
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
-  })
-  if (!res.ok) {
-    throw new Error(await readApiError(res))
-  }
-  return res.json() as Promise<T>
+  });
 }
 
 export const api = {
